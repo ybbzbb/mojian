@@ -30,6 +30,8 @@ steps:
 | builder-agent | TASK-003 | N/A | N/A | 2026-07-07 |
 | qa-agent | TASK-003 | N/A | N/A | 2026-07-07 |
 | builder-agent | TASK-004 | N/A | N/A | 2026-07-07 |
+| qa-agent | TASK-004 | N/A | N/A | 2026-07-07 |
+| builder-agent | TASK-005 | N/A | N/A | 2026-07-07 |
 
 ## builder-agent — 2026-07-07
 
@@ -130,3 +132,23 @@ steps:
 - [x] log.md 追加 TASK-004 — done
 - [x] issue #9 builder-agent TASK-004 comment — done
 - [x] issue #10 builder-agent TASK-004 comment — done
+
+## qa-agent (TASK-004) — 2026-07-07
+
+steps:
+- [x] dev 环境探测：cargo 1.96.1 可用，隔离 MOJIAN_HOME 临时目录 — done
+- [x] QA-1 cargo build --workspace 退出码 0 — done
+- [x] QA-2 cargo test -p mojian-core project 退出码 0，4 passed / 0 failed（register→load style_sampling + mojian.toml 往返 + 两负例）— done
+- [x] TASK-004 status reviewing → done — done
+- [x] review.md 追加 TASK-004 通过记录 — done
+
+## builder-agent (TASK-005) — 2026-07-07
+
+steps:
+- [x] TASK-005 status planned → ready → in_progress — done
+- [x] 实现 spec 模块（assets/spec 占位载荷树 + hash.rs tree_hash + master.rs bootstrap/权威 version-hash + deploy.rs 部署/hash 漂移覆盖）+ lib.rs re-export + Cargo.toml 追加 blake3/include_dir — done
+- [x] Build Verification（cargo check -p mojian-core 0 error / cargo build --workspace exit 0 / cargo test -p mojian-core 23 passed 0 failed，spec.rs 6 passed） — done
+- [x] TASK-005 status in_progress → reviewing — done
+- [x] log.md 追加 TASK-005 — done
+- [x] issue #9 builder-agent TASK-005 comment — done
+- [x] issue #10 builder-agent TASK-005 comment — done

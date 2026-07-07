@@ -42,3 +42,18 @@ QA Verification：
 
 运行结论：
   所有 QA Verification 通过 ✓（2/2）。任务要求的抽查项（12 表齐全 / schema_version=1 / 二次 open 幂等 / PRAGMA foreign_keys=ON）均由 tests/db.rs 三个集成测试断言并真跑通过。
+
+## TASK-004 — 2026-07-07 — ✅ 通过
+
+dev 环境：Rust 工具链 cargo 1.96.1（库/CLI 编译+集成测试型验收，无需启动服务）；隔离 MOJIAN_HOME 临时目录，未污染真实 ~/.mojian
+
+QA Verification：
+  [x] cargo build --workspace 退出码 0 — 命令：`cargo build --workspace`；退出码 0；输出 `Finished dev profile`
+  [x] cargo test -p mojian-core project 退出码 0，0 failed — 命令：`cargo test -p mojian-core project`；退出码 0；tests/project.rs `running 4 tests` → `test result: ok. 4 passed; 0 failed`：
+        - project_register_then_load_returns_style_sampling（register→load 得 SopPhase::StyleSampling，且存入 path 为绝对路径）... ok
+        - project_manifest_write_read_roundtrip（write_manifest → read_manifest 往返 project_id/spec_version 一致）... ok
+        - project_load_unknown_is_err（无此 project 返回 CoreError::Db）... ok
+        - project_read_missing_manifest_is_err（缺 mojian.toml 返回 CoreError::Io）... ok
+
+运行结论：
+  所有 QA Verification 通过 ✓（2/2）。任务要求的断言（register→load 初值 style_sampling / mojian.toml 读写往返）均由 tests/project.rs 集成测试真跑通过。

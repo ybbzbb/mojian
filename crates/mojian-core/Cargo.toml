@@ -11,6 +11,8 @@ uuid = { workspace = true }
 time = { workspace = true }
 serde = { workspace = true }
 toml = { workspace = true }
+blake3 = { workspace = true }
+include_dir = { workspace = true }
 
 [dev-dependencies]
 rusqlite = { workspace = true }

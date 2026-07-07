@@ -95,3 +95,33 @@ Build Verification：
 Builder Exit Criteria：6/6 通过
 
 已知风险：无。update_project_spec 由本任务提供库函数，其在 mojian new 流程中的调用与 spec_version/spec_hash 实值回填由 TASK-005（SPEC 部署）/ TASK-006（CLI）收口。
+
+## TASK-005 — 2026-07-07
+
+变更文件：
+- crates/mojian-cli/assets/spec/spec.toml（新增，version = "0.0.1-skeleton"，meta 不部署）
+- crates/mojian-cli/assets/spec/CLAUDE.md（新增，占位）
+- crates/mojian-cli/assets/spec/.claude/agents/.gitkeep（新增，占位）
+- crates/mojian-cli/assets/spec/.claude/skills/.gitkeep（新增，占位）
+- crates/mojian-cli/assets/spec/prompts/sop-1-style/README.md、sop-2-bible/README.md、sop-3-writing/README.md（新增，占位提示词包）
+- crates/mojian-core/src/spec/mod.rs（新增，模块登记 + re-export）
+- crates/mojian-core/src/spec/hash.rs（新增，blake3 tree hash）
+- crates/mojian-core/src/spec/master.rs（新增，include_dir 嵌入 + 主副本 bootstrap + 权威 version/hash）
+- crates/mojian-core/src/spec/deploy.rs（新增，部署 + hash 漂移覆盖）
+- crates/mojian-core/src/lib.rs（修改，仅追加 `pub mod spec;` 与 spec 侧 re-export）
+- crates/mojian-core/Cargo.toml（修改，仅追加 blake3 / include_dir 依赖行，均 workspace = true）
+- crates/mojian-core/tests/spec.rs（新增，bootstrap/deploy/tree_hash/drift 集成测试）
+
+实现摘要：在 mojian-core 落地 SPEC 主副本管理与部署机制（占位骨架）。hash.rs 的 tree_hash 对目录内每个文件按「相对路径（`/` 分隔）升序」拼接「相对路径 + 该文件内容 blake3 hex」再整体 blake3，得确定性 hex（顺序无关、内容敏感）；内部 hash_files 支持排除相对路径（供排除 spec.toml），deployed 与 authoritative 两侧对齐同一相对路径根，保证同构可比。master.rs 用 `include_dir!("$CARGO_MANIFEST_DIR/../mojian-cli/assets/spec")` 把占位载荷编译为 `EMBEDDED_SPEC`；ensure_master 在 `<data_dir>/spec/` 缺失时递归写出嵌入树形成权威主副本；authoritative_version 读主副本 spec.toml 的 version；authoritative_hash = 主副本除 spec.toml 外整棵树的 tree_hash。deploy.rs 的 deploy_spec 先删项目内 4 类部署目标（`.claude/agents`/`.claude/skills`/`CLAUDE.md`/`prompts`）再 1:1 递归拷载荷（跳过 spec.toml），返回 (version, hash)；sync_if_drifted 只对项目内部署目标条目实时重算 tree hash 与权威比对，不一致则覆盖重部署返回 (true, new_hash)，一致则不写返回 (false, hash)。
+
+范围说明：include_dir 嵌入由 mojian-core 直接引用 `../mojian-cli/assets/spec`（tech-design 将嵌入落点委派本任务定义，assets 布局固定在 mojian-cli/assets/spec）；bootstrap/部署函数仍以 `&include_dir::Dir` 参数化，供 TASK-006 的 CLI 传入。error.rs 不在 Allowed Files，spec.toml 解析失败复用既有 CoreError::Io（InvalidData 包裹），未新增错误变体。blake3/include_dir 均已在 workspace.dependencies 基线声明（tech-design 选型 5/6），无新增未声明依赖。
+
+Build Verification：
+- `cargo check -p mojian-core` → Finished, 0 error, 0 warning
+- `cargo build --workspace` → exit 0（触发依赖变更打包档）
+- `cargo test -p mojian-core --test spec` → 6 passed, 0 failed
+- `cargo test -p mojian-core` → 全绿（9+3+1+4+6 = 23 passed, 0 failed）
+
+Builder Exit Criteria：6/6 通过
+
+已知风险：无。CLI 侧（mojian new/status）对 ensure_master/deploy_spec/sync_if_drifted 的编排、DB spec_hash 回填由 TASK-006 收口。
