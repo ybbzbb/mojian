@@ -1,7 +1,7 @@
 # TASK-004 项目登记与 mojian.toml manifest
 
 - iteration: ITER-001
-- status: planned
+- status: reviewing
 - type: backend
 - owner: builder-agent
 - created: 2026-07-07
@@ -48,3 +48,5 @@
 ## Log
 
 - 2026-07-07 [planning-agent] status — → planned：创建任务
+- 2026-07-07 [builder-agent] status ready → in_progress：认领任务
+- 2026-07-07 [builder-agent] status in_progress → reviewing：实现 project 模块（register_project 单事务登记 project+project_state 初值 style_sampling / load_project_state / update_project_spec / mojian.toml 读写），lib.rs 登记并 re-export，Cargo.toml 追加 uuid/time/serde/toml；Build Verification（cargo check -p mojian-core、cargo test -p mojian-core project 4 passed 0 failed、cargo build --workspace exit 0）与 Builder Exit Criteria 全部通过

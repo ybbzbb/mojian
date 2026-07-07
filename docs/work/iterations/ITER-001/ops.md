@@ -28,6 +28,8 @@ steps:
 | builder-agent | TASK-002 | N/A | N/A | 2026-07-07 |
 | qa-agent | TASK-002 | N/A | N/A | 2026-07-07 |
 | builder-agent | TASK-003 | N/A | N/A | 2026-07-07 |
+| qa-agent | TASK-003 | N/A | N/A | 2026-07-07 |
+| builder-agent | TASK-004 | N/A | N/A | 2026-07-07 |
 
 ## builder-agent — 2026-07-07
 
@@ -108,3 +110,23 @@ steps:
 - [x] log.md 追加 TASK-003 — done
 - [x] issue #9 builder-agent TASK-003 comment — done
 - [x] issue #10 builder-agent TASK-003 comment — done
+
+## qa-agent (TASK-003) — 2026-07-07
+
+steps:
+- [x] dev 环境探测：cargo 1.96.1 可用，隔离 MOJIAN_HOME/TMPDIR 临时目录 — done
+- [x] QA-1 cargo build --workspace 退出码 0 — done
+- [x] QA-2 cargo test -p mojian-core db 退出码 0，db.rs 3 passed / 0 failed（12 表建库 + schema_version==1 + 二次打开幂等 + PRAGMA foreign_keys=ON） — done
+- [x] TASK-003 status reviewing → done — done
+- [x] review.md 追加 TASK-003 通过记录 — done
+
+## builder-agent (TASK-004) — 2026-07-07
+
+steps:
+- [x] TASK-004 status planned → in_progress — done
+- [x] 实现 project 模块（manifest 读写 + register/load/update_project_spec）+ lib.rs 登记 re-export + Cargo.toml 追加 uuid/time/serde/toml — done
+- [x] Build Verification（cargo check -p mojian-core / cargo test -p mojian-core project 4 passed 0 failed / cargo build --workspace exit 0） — done
+- [x] TASK-004 status in_progress → reviewing — done
+- [x] log.md 追加 TASK-004 — done
+- [x] issue #9 builder-agent TASK-004 comment — done
+- [x] issue #10 builder-agent TASK-004 comment — done

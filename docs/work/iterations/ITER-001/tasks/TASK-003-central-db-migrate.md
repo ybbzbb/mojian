@@ -1,7 +1,7 @@
 # TASK-003 中央 DB 建库与 schema_meta 迁移
 
 - iteration: ITER-001
-- status: reviewing
+- status: done
 - type: backend
 - owner: builder-agent
 - created: 2026-07-07
@@ -52,3 +52,4 @@
 - 2026-07-07 [builder-agent] Allowed Files 外小改动：error.rs 追加 `Db(#[from] rusqlite::Error)` 变体（仅追加不改旧），供 open_central_db 将 rusqlite 错误转 CoreError；Cargo.toml 另加 [dev-dependencies] rusqlite 供集成测试命名 Connection 类型路径。rusqlite 已在 workspace.dependencies 基线声明（tech-design 选型 1），无新增未声明依赖。
 - 2026-07-07 [builder-agent] Builder Exit Criteria 自证：① schema.rs 持 SCHEMA_VERSION=1 + 逐字 12 表 DDL，migrate.rs 内 tx.execute_batch(V1_SCHEMA_SQL) 单事务建全表；② migrate.rs 键于 schema_meta（非 user_version），事务外 PRAGMA foreign_keys=ON，全新库建表+INSERT version 1、已有库读版本 v1 no-op，事务失败回滚（db_foreign_keys_pragma_is_enabled 断言 FK=1）；③ open_central_db(path)->Result<Connection,CoreError> 打开→迁移→返回，唯一入口；④ tests/db.rs 断言 12 具名表存在、schema_version==1、二次打开幂等（schema_meta 仍 1 行）；⑤ cargo check -p mojian-core 0 error，列名 snake_case。
 - 2026-07-07 [builder-agent] status in_progress → reviewing：实现 mojian-core db 模块（schema/migrate/mod）——12 表 v1 建库 + schema_meta 迁移器 + open_central_db 唯一入口；Build Verification（cargo check -p mojian-core / cargo test -p mojian-core db 3 passed 0 failed / cargo build --workspace exit 0）与 Builder Exit Criteria 全部通过
+- 2026-07-07 [qa-agent] status reviewing → done：QA Verification 2/2 通过（cargo build --workspace exit 0；cargo test -p mojian-core db exit 0，db.rs 3 passed 0 failed 覆盖 12 表建库/schema_version==1/二次打开幂等/FK=ON）

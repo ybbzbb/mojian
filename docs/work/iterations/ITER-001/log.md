@@ -73,3 +73,25 @@ Build Verification：
 Builder Exit Criteria：5/5 通过
 
 已知风险：无。v1 一次性建全表，后续列增改走同一 schema_meta 有序步骤迁移器（已预留 MIGRATIONS 步骤形状与版本戳 UPDATE 分支）。
+
+## TASK-004 — 2026-07-07
+
+变更文件：
+- crates/mojian-core/src/project/manifest.rs（新增，ProjectManifest serde 模型 + write_manifest/read_manifest 读写 mojian.toml）
+- crates/mojian-core/src/project/mod.rs（新增，register_project / load_project_state / update_project_spec + now_rfc3339/to_absolute 助手）
+- crates/mojian-core/src/lib.rs（修改，仅追加 `pub mod project;` 与 project 侧 re-export）
+- crates/mojian-core/Cargo.toml（修改，仅追加 uuid / time / serde / toml 依赖行，均 workspace = true）
+- crates/mojian-core/tests/project.rs（新增，register→load + manifest 往返 + 错误路径集成测试）
+
+实现摘要：在 mojian-core 落地项目登记与身份标记读写。manifest.rs 定义 `ProjectManifest { project_id, spec_version }`（`#[derive(Serialize, Deserialize)]`），write_manifest 用 toml 序列化写 `<dir>/mojian.toml`，read_manifest 读回，缺文件（io NotFound）或内容非法均映射为 CoreError::Io。mod.rs 的 register_project 生成 UUID v4 project_id，在单事务内插入 project 行（name / 绝对 path / created_at=updated_at RFC3339）与 project_state 行（sop_phase = SopPhase::StyleSampling.as_db_str() 即 "style_sampling"），返回 project_id；load_project_state 按 project_id 读 project_state.sop_phase 经 SopPhase::try_from 还原，无此项目由 query_row 的 QueryReturnedNoRows → CoreError::Db；update_project_spec 回填 project 行的 spec_version / spec_hash / updated_at 供后续 CLI（REQ-014）收口。
+
+范围说明：error.rs 不在 Allowed Files，故 toml 序列化/解析失败复用既有 CoreError::Io 变体（以 io::ErrorKind::InvalidData 包裹并携带 mojian.toml 路径上下文），未新增错误变体、未改 error.rs。uuid/time/serde/toml 均已在 workspace.dependencies 基线声明（tech-design 选型 4/6），无新增未声明依赖。
+
+Build Verification：
+- `cargo check -p mojian-core` → Finished, 0 error
+- `cargo test -p mojian-core project` → 4 passed, 0 failed（register→load 得 SopPhase::StyleSampling + path 绝对断言 / mojian.toml 往返 project_id+spec_version 一致 / 无此项目返回 CoreError::Db / 缺 manifest 返回 CoreError::Io）
+- `cargo build --workspace` → exit 0
+
+Builder Exit Criteria：6/6 通过
+
+已知风险：无。update_project_spec 由本任务提供库函数，其在 mojian new 流程中的调用与 spec_version/spec_hash 实值回填由 TASK-005（SPEC 部署）/ TASK-006（CLI）收口。
