@@ -77,8 +77,10 @@ planned → skeleton_drafting → skeleton_review → prose_drafting → prose_r
 
 ```
 mojian 客户端数据目录/
-  spec/                     # ★ SPEC 权威副本（版本化，folder 形态，git 友好）
-    sop-1-style/ sop-2-bible/ sop-3-writing/
+  spec/                     # ★ SPEC 权威副本（= 部署布局，1:1；folder 形态，git 友好）
+    spec.toml               #   版本 meta：version（不部署）
+    CLAUDE.md  .claude/     #   部署载荷：顶层条目对齐 engine.md 部署目标
+    prompts/sop-1-style/ prompts/sop-2-bible/ prompts/sop-3-writing/
   central.db                # ★ 中央 DB：项目登记 + 各项目状态/统计/配置/引用
   logs/{project_id}/        # 日志文件（见「六、日志」）
   defaults.toml             # 全局默认配置（红线阈值等）
@@ -86,6 +88,7 @@ mojian 客户端数据目录/
 
 - SPEC 权威用**文件夹**（文本，版本化/覆盖/贡献都比塞 DB 自然）；`central.db` 里只记 SPEC 版本 + hash，不存正文。
 - 题材 SPEC 变体也在客户端管理（哪个项目派生/选用哪个 SPEC 包）。
+- **数据目录位置解析（ITER-001 落地）**：按 `MOJIAN_HOME` 环境变量 → 平台标准目录（Linux `$XDG_DATA_HOME/mojian`，默认 `~/.local/share/mojian`；macOS `~/Library/Application Support/mojian`）→ 兜底 `~/.mojian/` 的顺序定位。`MOJIAN_HOME` 使集成测试可指向隔离临时目录，不污染真实 `~`。
 
 ## 四、项目（运行环境）
 

@@ -1,7 +1,7 @@
 # Current Iteration
 
 id: ITER-001
-phase: building
+phase: issue_open
 source: https://github.com/ybbzbb/mojian/issues/9,https://github.com/ybbzbb/mojian/issues/10
 
 ## Cursors

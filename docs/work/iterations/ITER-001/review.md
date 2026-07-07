@@ -74,3 +74,42 @@ QA Verification：
 运行结论：
   所有 QA Verification 通过 ✓（2/2）。四类断言在 tests/spec.rs 6 个集成测试用例中真实覆盖并全绿。
   备注：字面命令 `cargo test -p mojian-core spec` 中 `spec` 是名字过滤，仅匹配 1 个名字含 "spec" 的用例（其余按名字被 filtered out），故补跑 `--test spec` 跑完整 spec 集成测试二进制，确认四类断言全部真实执行且通过。
+
+## TASK-006 — 2026-07-07 — ✅ 通过
+
+dev 环境：Rust 工具链 cargo 1.96.1（纯 workspace 库/CLI，无服务端）。真实二进制 `target/debug/mojian`；全程 `MOJIAN_HOME=$(mktemp -d)` + `PROJ="$(mktemp -d)/mybook"` 隔离临时目录，未污染真实 ~/.mojian。构建：`cargo build --workspace` 退出码 0。
+
+QA Verification：
+  [x] mojian new 退出码 0 + UUID/绝对 path/style_sampling — 命令：`mojian new "$PROJ"`；exit 0；stdout `project_id: d236332c-e57a-488c-984c-9ee35a31b5bf` / `path: .../mybook` / `phase: style_sampling`
+  [x] central.db + 表数 ≥12 + schema_version=1 — `test -f central.db` OK；`SELECT count(*) ... type='table'` = 13（≥12）；`SELECT schema_version FROM schema_meta` = 1
+  [x] mojian.toml 含 project_id/spec_version — `test -f mojian.toml` OK；grep 命中 `project_id = "d236332c..."` 与 `spec_version = "0.0.1-skeleton"`
+  [x] SPEC 已部署且无 spec.toml — CLAUDE.md / prompts/sop-1-style / .claude/agents 均 test 成立（另有 prompts/sop-2-bible、sop-3-writing、.claude/skills）；`test -e spec.toml` 不成立
+  [x] REQ-014 spec 两列非空 — `SELECT spec_version, spec_hash FROM project` = `0.0.1-skeleton|fd827d90...5104`，BOTH_NONEMPTY
+  [x] mojian status --path 退出码 0 + style_sampling — 命令：`mojian status --path "$PROJ"`；exit 0；stdout `project: mybook` / `phase: style_sampling`
+  [x] REQ-013 hash 覆盖 — `echo tampered >> CLAUDE.md`（count=1）→ `mojian status`（exit 0）→ `grep -c tampered CLAUDE.md` = 0（重部署覆盖还原）
+  [x] 桩命令 run/decide — `mojian run` exit 0 stdout `stub，将在 ITER-002 实现`；`mojian decide CH-001 CONFIRMED` exit 0 stdout 同提示（忽略尾随参数）
+  [x] 错误路径 非 mojian 项目 — `mojian status --path <空目录>` exit 1；输出 `错误：非 mojian 项目：目录下无 mojian.toml (...)`
+  [x] 重复初始化拒绝 — 对已初始化 `$PROJ` 再 `mojian new "$PROJ"` exit 1；输出 `错误：目录已是 mojian 项目（存在 mojian.toml），拒绝重复初始化：...`
+
+独立复核：
+  cargo build --workspace 退出码 0；cargo test --workspace 全绿 —— cli.rs 5 / lib.rs 9 / db.rs 3 / paths.rs 1 / project.rs 4 / spec.rs 6 = 28 passed，0 failed。
+
+运行结论：
+  所有 QA Verification 通过 ✓（10/10）。真实二进制端到端收口验证：mojian new 建目录+中央 DB 登记+SPEC 部署+回填 project 行 spec 列+写 manifest，mojian status 读 manifest+打开时 hash 覆盖还原+读回 phase，run/decide 桩，错误路径与重复初始化拒绝均符合期望。
+
+---
+
+## QA 验收完成 — 2026-07-07
+
+完成任务：6 个
+取消任务：0 个
+跳过任务：0 个
+总计：6 个
+
+交付摘要（每个 done 任务一行）：
+- TASK-001: workspace 骨架 + 依赖基线 + paths/error — QA Verification 2/2 ✓
+- TASK-002: domain 三枚举 + DB 文本互转 — QA Verification 2/2 ✓
+- TASK-003: 中央 DB schema v1（12 表）+ 迁移器 + open_central_db — QA Verification 2/2 ✓
+- TASK-004: project 注册 + manifest 读写 — QA Verification 2/2 ✓
+- TASK-005: SPEC 主副本 bootstrap + deploy + hash 漂移覆盖 — QA Verification 2/2 ✓
+- TASK-006: CLI 命令 new/status + run/decide 桩（端到端收口）— QA Verification 10/10 ✓

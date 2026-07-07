@@ -126,3 +126,71 @@ phase: design_review → planning_ready
 tech-design.md status → confirmed
 
 下一步：planning-agent 自动接手，拆分任务。
+
+---
+
+## Round 4 — 2026-07-07 [archivist-agent review decision]
+
+阶段: archive_review
+变更类型: feature
+影响面: large
+风险信号:
+- product.md 首次成文 + 基线 3 篇（overview/storage/engine）各有实现级细化，涉及技术栈基线这类架构级约束固化
+- storage.md「三」SPEC 主副本布局图与实况不一致，需校正（SOP 包由 spec/ 顶层移至 prompts/ 下）
+- 触及 devops.md（人工维护规范文件），需人工明确授权后应用
+
+建议: human_review
+
+（review_policy = human_required，且影响面 = large → 强制等待人工）
+
+---
+
+## Round 4 — 2026-07-07 [archivist-agent output]
+
+归档建议摘要：
+- product.md：1 项（首次成文——已落地功能 + 尚未落地）
+- tech-design 基线：4 项（storage 主副本布局 1:1 校正 + 数据目录解析策略 / engine 项目缓存 hash 实时重算 + blake3 tree hash 定义 / overview 技术栈基线新增小节）
+- devops.md：1 项建议（新增 ## Build Verification，需人工授权应用）
+- 不归档任务：0 个（6 任务产出均已归档；4 类实现细节有意不上升 PRD）
+
+等待操作：在下方 [human feedback] 块填写决定，或在 issue #9 / #10 回复，然后重触发 archivist-agent
+- 决定 = "修订"     → 生成 revision 2
+- 决定 = "CONFIRMED" → 终审检查，通过则应用 diff 到 docs/product.md / 项目级技术设计基线，并关闭迭代（issue 来源且仍 open → phase: issue_open）
+
+请特别就 devops.md 建议 5 的应用授权、及技术栈基线固化位置（overview.md）给出意见。
+
+---
+
+## Round 4 — 2026-07-07 [human feedback]
+
+### 意见
+
+归档建议全部同意：
+- product.md 首次成文（已落地功能 + 尚未落地）—— 同意。
+- tech-design 基线细化 1~4（storage 主副本布局校正 + 数据目录解析 / engine hash 定义 / overview 技术栈基线）—— 同意。
+- devops.md 建议 5（新增 `## Build Verification` 节）—— 同意，**授权 archivist-agent 应用**。
+- 不归档清单合理；协议复核结论（无需精简）认可。
+
+### 决定
+CONFIRMED
+
+---
+
+## Round 4 — 2026-07-07 [archivist-agent output] (final check)
+
+终审通过：收到 Round 4 CONFIRMED，最终检查全部通过：
+- 提议完备：6 个 done 任务均已对应到 product.md（首次成文）/ tech-design 基线细化 / devops.md，或列入「不归档实现细节」清单并说明原因。
+- diff 可执行：每条建议均含章节 / 原文片段 / 新文片段 / 原因，锚点已核对存在。
+- 与 PRD 不冲突：4 项 tech-design 细化为兼容性实现级补充（Round 3 人工已认可），不与基线架构约束冲突。
+
+已应用 diff：
+- docs/product.md：首次成文（已落地功能 + 尚未落地），1 处
+- docs/tech-design/storage.md：SPEC 主副本布局 1:1 校正 + 数据目录解析策略，2 处
+- docs/tech-design/engine.md：项目缓存 hash 实时重算 + blake3 tree hash 定义，1 处
+- docs/tech-design/overview.md：技术栈基线新增小节，1 处
+- docs/devops.md：新增 `## Build Verification` 节（人工授权），1 处
+
+已更新 docs/work/history.md：ITER-001 Status → issue_open，追加摘要/改动/任务总结块。
+
+source 为 issue#9,#10 且两者仍 open → 不关闭 source issue。
+phase: archive_review → issue_open（等待人工关闭 source issue，由 driver 检测后推进 done）

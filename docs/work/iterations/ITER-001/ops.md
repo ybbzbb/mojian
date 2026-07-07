@@ -174,6 +174,49 @@ steps:
 - [x] issue #9 builder-agent TASK-006 comment — done
 - [x] issue #10 builder-agent TASK-006 comment — done
 
+## qa-agent (TASK-006) — 2026-07-07
+
+steps:
+- [x] dev 环境探测：cargo 1.96.1 + sqlite3 3.43.2 可用；隔离 MOJIAN_HOME=$(mktemp -d) / PROJ=$(mktemp -d)/mybook 临时目录 — done
+- [x] cargo build --workspace 退出码 0；target/debug/mojian 就位 — done
+- [x] QA Verification 10/10 真实二进制端到端真跑（new→central.db/13 表/schema_version=1→mojian.toml→SPEC 部署→REQ-014 spec 列→status→REQ-013 hash 覆盖还原→run/decide 桩→非 mojian 错误路径→重复初始化拒绝）全部通过 — done
+- [x] 独立复核 cargo test --workspace 28 passed / 0 failed — done
+- [x] TASK-006 status reviewing → done — done
+- [x] review.md 追加 TASK-006 通过记录 + QA 验收完成摘要 — done
+- [x] current-iteration.md → phase: building → archive_ready — done
+- [x] issue #9 qa-agent qa-complete comment — done
+- [x] issue #10 qa-agent qa-complete comment — done
+
+## archivist-agent — 2026-07-07
+
+steps:
+- [x] 前置校验：6 任务全 done，无 reviewing/in_progress/blocked/ready/planned；无 pending ops — done
+- [x] archive-proposal.md (revision 1) — done
+- [x] human-review.md (Round 4 review decision + system output) — done
+- [x] current-iteration.md → phase: archive_ready → archive_review — done
+- [x] issue #9 archivist-agent revision-1 comment — done
+- [x] issue #10 archivist-agent revision-1 comment — done
+
+## archivist-agent (final check) — 2026-07-07
+
+steps:
+- [x] 前置校验：6 任务全 done；无 pending ops；Round 4 [human feedback] = CONFIRMED（含 devops.md 建议 5 授权） — done
+- [x] 终审检查：提议完备 / diff 可执行 / 与 PRD 不冲突 — 全部通过 — done
+- [x] apply diff to docs/product.md（首次成文，1 处） — done
+- [x] apply diff to docs/tech-design/storage.md（主副本布局 + 数据目录解析，2 处） — done
+- [x] apply diff to docs/tech-design/engine.md（hash 实时重算 + blake3 tree hash，1 处） — done
+- [x] apply diff to docs/tech-design/overview.md（技术栈基线小节，1 处） — done
+- [x] apply diff to docs/devops.md（新增 ## Build Verification，人工授权，1 处） — done
+- [x] archive-proposal.md status → confirmed — done
+- [x] update history.md (Status=issue_open, 追加摘要/改动/任务) — done
+- [x] human-review.md (Round 4 final check output) — done
+- [x] current-iteration.md → phase: archive_review → issue_open — done
+- [x] issue #9 archivist-agent issue_open comment — done
+- [x] issue #10 archivist-agent issue_open comment — done
+
 ## Token Log
 
 | builder-agent | TASK-006 | N/A | N/A | 2026-07-07 |
+| qa-agent | TASK-006 | N/A | N/A | 2026-07-07 |
+| archivist-agent | revision 1 | N/A | N/A | 2026-07-07 |
+| archivist-agent | ITER-001 close (final check) | N/A | N/A | 2026-07-07 |

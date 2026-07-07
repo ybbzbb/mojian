@@ -1,7 +1,7 @@
 # TASK-006 CLI 命令 new / status + run / decide 桩
 
 - iteration: ITER-001
-- status: reviewing
+- status: done
 - type: backend
 - owner: builder-agent
 - created: 2026-07-07
@@ -44,16 +44,16 @@
 
 前置：`export MOJIAN_HOME=$(mktemp -d)`；`export PROJ="$(mktemp -d)/mybook"`；二进制路径 `target/debug/mojian`（先 `cargo build --workspace`，退出码 0）。
 
-- [ ] `target/debug/mojian new "$PROJ"` 退出码 0，stdout 含 UUID 形式 project_id、`$PROJ` 绝对路径、`style_sampling`
-- [ ] `test -f "$MOJIAN_HOME/central.db"` 成立；`sqlite3 "$MOJIAN_HOME/central.db" "SELECT count(*) FROM sqlite_master WHERE type='table'"` 返回 ≥ 12；`sqlite3 "$MOJIAN_HOME/central.db" "SELECT schema_version FROM schema_meta"` 返回 `1`
-- [ ] `test -f "$PROJ/mojian.toml"` 成立；`grep project_id "$PROJ/mojian.toml"` 命中；`grep spec_version "$PROJ/mojian.toml"` 命中
-- [ ] SPEC 已部署：`test -f "$PROJ/CLAUDE.md"` 且 `test -d "$PROJ/prompts/sop-1-style"` 且 `test -d "$PROJ/.claude/agents"` 均成立；`test -e "$PROJ/spec.toml"` 不成立（spec.toml 不属部署载荷）
-- [ ] REQ-014 一致性：`sqlite3 "$MOJIAN_HOME/central.db" "SELECT spec_version, spec_hash FROM project"` 两列均非空
-- [ ] `target/debug/mojian status --path "$PROJ"` 退出码 0，stdout 含 `style_sampling`
-- [ ] REQ-013 hash 覆盖：`echo tampered >> "$PROJ/CLAUDE.md"` 后 `target/debug/mojian status --path "$PROJ"` 退出码 0，随后 `grep -c tampered "$PROJ/CLAUDE.md"` 返回 `0`（被重部署覆盖还原）
-- [ ] 桩命令：`target/debug/mojian run` 退出码 0 且 stdout 含 `stub，将在 ITER-002 实现`；`target/debug/mojian decide CH-001 CONFIRMED` 退出码 0 且 stdout 含同一提示
-- [ ] 错误路径：`target/debug/mojian status --path "$(mktemp -d)"`（无 mojian.toml 的空目录）退出码非 0，stderr/stdout 含「非 mojian 项目」类错误信息
-- [ ] 重复初始化：对已初始化的 `$PROJ` 再次 `target/debug/mojian new "$PROJ"` 退出码非 0（拒绝重复初始化）
+- [x] `target/debug/mojian new "$PROJ"` 退出码 0，stdout 含 UUID 形式 project_id、`$PROJ` 绝对路径、`style_sampling`
+- [x] `test -f "$MOJIAN_HOME/central.db"` 成立；`sqlite3 "$MOJIAN_HOME/central.db" "SELECT count(*) FROM sqlite_master WHERE type='table'"` 返回 ≥ 12；`sqlite3 "$MOJIAN_HOME/central.db" "SELECT schema_version FROM schema_meta"` 返回 `1`
+- [x] `test -f "$PROJ/mojian.toml"` 成立；`grep project_id "$PROJ/mojian.toml"` 命中；`grep spec_version "$PROJ/mojian.toml"` 命中
+- [x] SPEC 已部署：`test -f "$PROJ/CLAUDE.md"` 且 `test -d "$PROJ/prompts/sop-1-style"` 且 `test -d "$PROJ/.claude/agents"` 均成立；`test -e "$PROJ/spec.toml"` 不成立（spec.toml 不属部署载荷）
+- [x] REQ-014 一致性：`sqlite3 "$MOJIAN_HOME/central.db" "SELECT spec_version, spec_hash FROM project"` 两列均非空
+- [x] `target/debug/mojian status --path "$PROJ"` 退出码 0，stdout 含 `style_sampling`
+- [x] REQ-013 hash 覆盖：`echo tampered >> "$PROJ/CLAUDE.md"` 后 `target/debug/mojian status --path "$PROJ"` 退出码 0，随后 `grep -c tampered "$PROJ/CLAUDE.md"` 返回 `0`（被重部署覆盖还原）
+- [x] 桩命令：`target/debug/mojian run` 退出码 0 且 stdout 含 `stub，将在 ITER-002 实现`；`target/debug/mojian decide CH-001 CONFIRMED` 退出码 0 且 stdout 含同一提示
+- [x] 错误路径：`target/debug/mojian status --path "$(mktemp -d)"`（无 mojian.toml 的空目录）退出码非 0，stderr/stdout 含「非 mojian 项目」类错误信息
+- [x] 重复初始化：对已初始化的 `$PROJ` 再次 `target/debug/mojian new "$PROJ"` 退出码非 0（拒绝重复初始化）
 
 ## Dependencies
 
@@ -71,3 +71,4 @@
   - EC5 run/decide 打印「stub，将在 ITER-002 实现」exit 0；decide CH-001 CONFIRMED 忽略尾随参数
   - EC6 集成测试 tests/cli.rs 5 用例（happy new→status / 非 mojian 错误 / 拒绝重复初始化 / 篡改还原 / 桩）全通过，均以 MOJIAN_HOME 隔离临时目录
   - EC7 cargo check/build --workspace 0 error；命名遵循 docs/naming.md（snake_case 文件、PascalCase 类型、kebab-case crate）
+- 2026-07-07 [qa-agent] status reviewing → done：QA Verification 10/10 通过（真实二进制 target/debug/mojian，MOJIAN_HOME/PROJ 隔离临时目录；new→status→篡改还原→桩→错误路径→重复初始化 全项真跑）；独立复核 cargo build --workspace exit 0、cargo test --workspace 28 passed 0 failed
