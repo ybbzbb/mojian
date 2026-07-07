@@ -71,3 +71,20 @@ mojian 客户端（程序 = 唯一的机器状态源，装一次，全局）
 - **SPEC 升级**：客户端权威更新 → 项目启动时 hash 不一致自动覆盖重部署。
 - **DB schema 升级**：只在客户端中央库跑一次迁移。
 - **默认配置升级**：默认值随程序；项目只存覆盖项，没覆盖的自动吃新默认。
+
+## 技术栈基线（ITER-001 落地）
+
+执行器为 Rust Cargo workspace：`crates/mojian-core`（库）+ `crates/mojian-cli`（产出二进制 `mojian`）。奠基选型（后续迭代继承，锁定成本高，均取生态主流）：
+
+| 关注点 | 选型 | 理由 |
+|--------|------|------|
+| SQLite 驱动 | `rusqlite`（`bundled`） | 同步、零运行时依赖、编译内置 SQLite 跨平台无系统依赖；`execute_batch` 与裸 DDL 直接对应 |
+| DB 迁移 | 自研 `schema_meta` 迁移器 | storage.md 要求以 `schema_meta.schema_version` 驱动（非 PRAGMA `user_version`）；有序编号步骤 + 事务 + 失败回滚 |
+| CLI 框架 | `clap` v4（derive） | Rust 生态标准，声明式子命令 |
+| 数据目录定位 | `directories` + 分层解析 | 平台标准目录 + `MOJIAN_HOME` 覆盖（见 storage.md「三」） |
+| 序列化 | `serde` + `toml` | `mojian.toml` 人可读 |
+| 内容 hash | `blake3`（tree hash） | 仅内部部署缓存比对，取更快更简，无 SHA 标准化诉求 |
+| 嵌入 SPEC 骨架 | `include_dir` | 占位主副本编译进二进制，首次运行落地到 `<data_dir>/spec/` |
+| 其余 | `uuid` / `time` / `anyhow` / `thiserror` | project_id / 时间戳 / 应用层与库错误 |
+
+全部版本集中在 workspace 根 `[workspace.dependencies]` 统一管理。本迭代零 token 花费面：不引入 async 运行时（tokio）/ ORM / HTTP 网络栈 / LLM SDK。

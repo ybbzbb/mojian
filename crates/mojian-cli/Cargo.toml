@@ -1,0 +1,14 @@
+[package]
+name = "mojian-cli"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "mojian"
+path = "src/main.rs"
+
+[dependencies]
+mojian-core = { path = "../mojian-core" }
+clap = { workspace = true }
+anyhow = { workspace = true }
+include_dir = { workspace = true }

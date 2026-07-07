@@ -1,0 +1,18 @@
+[package]
+name = "mojian-core"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+thiserror = { workspace = true }
+directories = { workspace = true }
+rusqlite = { workspace = true }
+uuid = { workspace = true }
+time = { workspace = true }
+serde = { workspace = true }
+toml = { workspace = true }
+blake3 = { workspace = true }
+include_dir = { workspace = true }
+
+[dev-dependencies]
+rusqlite = { workspace = true }
