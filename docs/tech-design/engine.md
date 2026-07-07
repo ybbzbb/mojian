@@ -41,7 +41,7 @@ claude -p "用 skeleton-agent 处理 CH-001..003，参数如下：<切片参数>
 ```
 
 - claude 读 `.claude/agents/skeleton-agent.md`（部署的 SPEC）+ Rust 传的参数 + 白名单内 SSOT 文件。
-- Rust 解析 JSON（结果 / 成本 / usage）落 `generation_log`。
+- Rust 解析 JSON（结果 / 成本 / usage）追加进 `generation.jsonl` 日志文件。
 - 备选（不采用）：Rust 直接打 Anthropic API —— 丢了工具循环，得自己实现 Read/Write。
 
 ## bundle：一次 SDK 调用喂进去的东西
@@ -77,7 +77,7 @@ write:
 
 - Rust 装配器把 `{arc_id}` `{batch}` 等符号按当前 DB 状态解析成具体路径 + 段落抽取（`#anchor`）+ 内容 hash。
 - `write:` 声明喂给 `bundle.write_scope`（沙箱写白名单）。
-- `#anchor` 段级切片依赖 SSOT 稳定小标题锚点（见 `storage.md` 开放问题②）。
+- `#anchor` 段级切片依赖 SSOT 稳定小标题锚点（圣经、大纲采用轻量锚点约定，见 `storage.md`）。
 - 「参数优先、缺失回退读文件」：切片作参数内联；部署 agent 仍可 Read 白名单内文件作兜底（对齐 ink_node 双路径，保证中断恢复健壮）。
 
 ## 人机决定接口（CLI）
@@ -94,7 +94,7 @@ mojian decide <关卡> <判定> [--comment "..." | --file ...]
         #   补 story_scope（缺失时程序停机等人补）
 ```
 
-节奏：`run` 跑到撞关卡 → 人 `decide`（带评论/补充）→ 再 `run`。**人的评论既落 `decision_log`，又被装配器切进下一次生成的 bundle**（对应 ink_node 里 agent 读 human-review.md 历史评论；mojian 改为结构化 CLI + DB，可对账可追溯）。
+节奏：`run` 跑到撞关卡 → 人 `decide`（带评论/补充）→ 再 `run`。**人的评论既追加进 `decision.jsonl`，又被装配器切进下一次生成的 bundle**（对应 ink_node 里 agent 读 human-review.md 历史评论；mojian 改为结构化 CLI + 日志文件，可对账可追溯）。
 
 > 命令面（子命令全集）为 planned，schema 定稿后确定。
 
@@ -103,15 +103,10 @@ mojian decide <关卡> <判定> [--comment "..." | --file ...]
 Rust 实现，在**进人工队列之前**跑：字数区间、对话占比、最长叙述段、与计划偏差率。超线**直接打回 `prose_drafting`，不进人工队列**——人只看「爽不爽」（AP-003 / AP-004 落地）。
 
 - 建议用 Rust 重写 ink_node 的 `text-stats.py / skeleton-stats.py / plan-structure-check.py`（零外部依赖、确定性）。
-- 结果落 `check_result` 表。
+- 结果追加进 `check.jsonl` 日志文件。
+- **红线默认值**：采用实测经验值（约 2300-3000 字/章、对话占比 15-50%），存 `defaults.toml`；项目可覆盖（`config` 表），并留「首卷后重定标」钩子。
 
 ## 两个「确定性 > 纪律」的升级
 
 1. **圣经神圣 = 沙箱强约束**：写作步骤子进程 `write_scope` 白名单里根本没有 `bible/`，物理上写不了。ink_node 靠 SPEC 一条「禁止修改 bible/」纪律，mojian 靠沙箱。
 2. **红线在人工队列之前**：见上。规则违反从「靠验证抓」变成「物理上做不到」/「自动打回」。
-
-## 开放问题
-
-1. **红线默认值**：直接用实测经验值（约 2300-3000 字/章、对话占比 15-50%）+ 留「首卷后重定标」钩子？还是别的？（#7 开放问题② / `infra.md`）
-2. `claude` 无头模式的具体参数面（allowedTools 粒度、`--add-dir` sandbox 约束、成本/usage 字段解析）需实测一次调用后固化。
-3. 输入契约 manifest 放 agent frontmatter 还是 sidecar 文件？符号引用语法（`#anchor` / `:{param}`）需与 SSOT 锚点约定一起定稿。

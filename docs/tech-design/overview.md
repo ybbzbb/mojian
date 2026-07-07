@@ -1,6 +1,6 @@
 # Tech Design · Overview
 
-> 本篇是 mojian 执行器的**项目级技术设计总纲**（理念定型阶段的设计草案，多数为 `planned`，未由代码证明的部分标注 `❓待定` / `TODO`，不作为已实现事实）。文件夹索引见 `docs/tech-design.md`（WIKI）。总纲 RFC 见 GitHub #1，三个 SOP 设计见 #5/#6/#7。
+> 本篇是 mojian 执行器的**项目级技术设计总纲**（理念定型阶段的设计草案，多数为 `planned` / `TODO`，未由代码证明，不作为已实现事实）。文件夹索引见 `docs/tech-design.md`（WIKI）。总纲 RFC 见 GitHub #1，三个 SOP 设计见 #5/#6/#7。
 
 ## 一句话架构
 
@@ -23,7 +23,8 @@ SPEC + 过程产物  → 结果产物
 mojian 客户端（程序 = 唯一的机器状态源，装一次，全局）
 ├── SPEC 权威副本（版本化，带 hash）
 ├── 中央 DB（一个库，按 project_id 分区）
-│     项目登记 · 各项目状态 · 日志 · 统计 · 配置 · artifact_ref · bible_version/void · check_result
+│     项目登记 · 各项目状态 · 统计 · 配置 · artifact_ref · bible_version/void
+├── 日志文件（按 project_id）：generation / decision / check（只增不改，非 DB）
 └── 全局默认配置
         │  启动 / 打开项目
         ▼
@@ -42,9 +43,7 @@ mojian 客户端（程序 = 唯一的机器状态源，装一次，全局）
 |---|---|---|
 | **SPEC** | 所有提示词 + 规则（每步「读什么/干什么/输出什么/自检闸门/禁止项/VOID 怎么走」） | 权威在**客户端**；项目里是可弃部署缓存 |
 | **SSOT** | 人直读直改的创作内容：**过程产物**（抽取信息、风格说明、圣经…）+ **结果产物**（大纲、正文…） | **项目**目录 |
-| **DB** | 机器变量：状态 · 日志 · 统计 · 配置。**不是创作内容** | **客户端**中央 SQLite（按 project_id 分区） |
-
-> 过程产物 / 结果产物的判据，以及圣经、骨架各归哪一类 —— 见 `storage.md` 开放问题①。
+| **DB** | 机器变量：状态 · 统计 · 配置 · 引用（日志走文件）。**不是创作内容** | **客户端**中央 SQLite（按 project_id 分区）+ 日志文件 |
 
 ## 启动执行流
 
@@ -59,7 +58,7 @@ mojian 客户端（程序 = 唯一的机器状态源，装一次，全局）
      bundle = 装配器.切片(action, state)    // 算出最小 SPEC+SSOT 切片 —— 压 AP-002
      result = SDK.跑(bundle)               // claude 无头子进程，产出写回项目 SSOT
      checks = 检查器.客观校验(result)        // 字数/对话占比/结构，零 token —— 压 AP-003
-     客户端DB.落库(action, result, checks)  // 状态/日志/统计写回客户端
+     客户端.落库(action, result, checks)    // 状态/统计写 DB，日志追加文件
    }
 ```
 

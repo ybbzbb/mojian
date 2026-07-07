@@ -44,15 +44,17 @@ mojian 客户端数据目录/
   materials/{book}/skeleton.md                 过程产物：抽取骨架
   creative/creative-brief.md                   过程产物：借鉴定位
   creative/creative-vision.md                  过程产物：创意愿景
-  bible/*.md                                   ❓过程/结果：圣经九件套（开放问题①）
+  bible/*.md                                   过程产物：圣经九件套
   outline/*.md                                 结果产物：大纲
   volumes/{arc}/plan.md                        过程产物：章节计划（内容）
-  volumes/{arc}/chapters/{ch}-skeleton.md      ❓过程/结果：骨架（开放问题①）
+  volumes/{arc}/chapters/{ch}-skeleton.md      过程产物：骨架
   volumes/{arc}/chapters/{ch}.md               结果产物：正文
   mojian.toml                                  身份标记：project_id（+ 已部署 SPEC 版本）；非机器状态
 ```
 
 项目里**没有 DB**——机器状态全在客户端 `central.db`，靠 `mojian.toml` 的 `project_id` 关联。
+
+**过程/结果判据**：结果产物 = 作者/读者最终交付物（大纲、正文）；过程产物 = 为产出它们而搭的设定与脚手架（抽取信息、风格说明、圣经、章节计划、骨架）。
 
 ### SSOT 文件格式（内容契约，由 SPEC 定义）
 
@@ -61,7 +63,7 @@ mojian 客户端数据目录/
 | 抽取骨架 `materials/{book}/skeleton.md` | 分块（~5万字/块）→ 情节节拍 · 爽点与钩子标注 · 人物出场 · 章末悬念类型（节奏统计入 DB，不塞此文件） |
 | `creative-brief.md` | 值得借鉴的爽点系统/升级结构/节奏模型，逐项注明出处与理由（客观） |
 | `creative-vision.md` | 题材定位 · 主角设定 · 金手指 · 预期规模（主观决策，不重复 brief） |
-| 圣经九件套 `bible/*.md` | 世界观规则 · 爽点系统 · 金手指 · 主角弧度 · 人物档案 · 时间线 · 文风(style) · 禁忌 · 伏笔账本（schema 见开放问题③） |
+| 圣经九件套 `bible/*.md` | 世界观规则 · 爽点系统 · 金手指 · 主角弧度 · 人物档案 · 时间线 · 文风(style) · 禁忌 · 伏笔账本（结构化 schema 属 SOP② 设计，见 #6） |
 | 大纲 `outline/*.md` | 全书大纲 + 各卷大纲，只展开不创新 |
 | 章节计划 `plan.md`（逐章条目） | `story_scope` · `protagonist_goal` · `obstacle` · `chapter_turn` · `reader_payoff` · `key_characters_state`（纯内容，**无状态字段**——状态在客户端 DB） |
 | 骨架 `{ch}-skeleton.md` | ≤1000 字：场景序列 · 场景时序与因果 · 伏笔处理 · 结尾钩子 |
@@ -69,39 +71,167 @@ mojian 客户端数据目录/
 
 ### 切片约束（与 `engine.md` 装配器耦合）
 
-段级切片（如「圣经 style.md 里骨架相关的那一段」）要求 SSOT 文件有**机器可寻址的稳定结构**（命名小标题锚点），否则只能整文件塞入。原则：只在「高频被读 + 体量大」的产物上加结构——圣经用命名段落、大纲按卷/章加锚点；正文除「前一章整篇」外不作输入切入。见开放问题②。
+段级切片（如「圣经 style.md 里骨架相关的那一段」）要求 SSOT 文件有**机器可寻址的稳定结构**（命名小标题锚点），否则只能整文件塞入。约定：**圣经、大纲采用轻量小标题锚点**（供程序段级切片）——只在「高频被读 + 体量大」的产物上加结构；正文除「前一章整篇」外不作输入切入。
 
 ## 四、DB 表设计（客户端 `central.db`）
 
-> 列名 `snake_case`，schema 定稿后确定。除 `project` 外，各表均带 `project_id` 外键（按项目分区）。
+**状态入 DB，日志入文件。** 当前/可查询的状态放 SQLite；只增不改的历史流（生成/决定/检查）放文件（见「五、日志」）。
 
-| 表 | 存什么 | 作用 |
-|---|---|---|
-| `project` | project_id、路径、名称、创建时间、部署的 SPEC 版本+hash | 项目登记（中央唯一） |
-| `project_state` | project_id、phase、当前卷、各游标、时间戳 | 状态机的输入 |
-| `chapter` | project_id、id、arc、status、verify_flag、deviation、骨架/正文文件 hash | 章节流水线 |
-| `batch` | project_id、id、arc、章节集、status | 调度单位 |
-| `artifact_ref` | project_id、path、kind(spec/过程/结果)、content_hash、version | **DB↔SSOT 的桥**（靠 hash 认变更） |
-| `generation_log` | project_id、step、spec 路径+hash、本次读的输入切片及其 hash、token 进/出、成本 | 可复现 + AP-002 token 对账 |
-| `bible_version` | project_id、版本、原因、触发源(void/人工)、时间 | 圣经版本化 |
-| `void_record` | project_id、章节、原因、影响范围、时间 | VOID 记录 |
-| `decision_log` | project_id、关卡、判定(CONFIRMED/REVISE/VOID)、人写的评论/补充信息、时间 | 人的决定入库 |
-| `check_result` | project_id、章节/批、检查项、指标值、通过与否 | 客观红线结果 |
-| `stat` | project_id、对话占比、章字数、钩子密度等 | 参考书风格画像 + 写作对账 |
-| `config` | project_id、键、覆盖值 | 项目配置**覆盖项**（默认在 `defaults.toml`） |
+### 对象关系图
 
-### DB↔SSOT 的桥：hash 游标
+```
+                        ┌──────────────┐
+                        │   project    │  项目登记（中央唯一）
+                        └──────┬───────┘
+        ┌──────────────┬───────┼───────────┬──────────────┬────────────┐
+        │1:1           │1:N    │1:N        │1:N           │1:N         │1:N
+        ▼              ▼       ▼           ▼              ▼            ▼
+┌───────────────┐ ┌────────┐ ┌────────┐ ┌───────────┐ ┌──────────┐ ┌────────┐
+│ project_state │ │reference│ │ volume │ │bible_     │ │artifact_ │ │ config │
+│  (phase/游标) │ │ _book  │ │(卷/Arc)│ │ version   │ │ ref      │ │(覆盖项)│
+└───────────────┘ └────────┘ └───┬────┘ └───────────┘ └──────────┘ └────────┘
+                                  │1:N ┌───────────┐
+                                  ├────┤   batch   │
+                                  │    └─────┬─────┘
+                                  │1:N       │1:N
+                                  ▼          ▼
+                              ┌───────────────────┐      ┌─────────────┐
+                              │      chapter      │◄─1:N─┤ void_record │
+                              │ (最细状态机载体)  │      └─────────────┘
+                              └───────────────────┘
+                              ┌───────────────────┐
+                              │       stat        │  节奏统计（book/chapter 维度）
+                              └───────────────────┘
+```
 
-`artifact_ref.content_hash` + `generation_log` 里记录的输入切片 hash，共同支撑「过期检测」（见 `domain-model.md` 的 VOID 机制）。product.md 里已有的 `product_md_hash` 游标就是这个思路的先例。
+### 建表（`central.db`；列名 `snake_case`，SQLite 类型）
 
-### schema 版本与升级
+```sql
+CREATE TABLE project (
+  project_id    TEXT PRIMARY KEY,          -- UUID
+  name          TEXT NOT NULL,
+  path          TEXT NOT NULL,             -- 项目目录绝对路径
+  spec_version  TEXT,                      -- 已部署的 SPEC 版本
+  spec_hash     TEXT,                      -- 部署缓存校验用
+  created_at    TEXT NOT NULL,
+  updated_at    TEXT NOT NULL
+);
 
-`central.db` 带 `schema_version`；程序升级时**只在客户端跑一次迁移**，不用逐项目处理（集中的红利，见 `overview.md` 升级模型）。
+CREATE TABLE project_state (               -- 1:1 project
+  project_id       TEXT PRIMARY KEY REFERENCES project(project_id),
+  sop_phase        TEXT NOT NULL,          -- style_sampling … bible_building … writing
+  current_volume   TEXT REFERENCES volume(id),
+  cursors          TEXT,                   -- JSON：跨步骤游标（如抽取块游标聚合视图）
+  updated_at       TEXT NOT NULL
+);
 
-## 开放问题
+CREATE TABLE reference_book (              -- SOP① 参考小说
+  id             TEXT PRIMARY KEY,
+  project_id     TEXT NOT NULL REFERENCES project(project_id),
+  title          TEXT NOT NULL,
+  extract_status TEXT NOT NULL,            -- pending | extracting | extracted
+  block_cursor   INTEGER NOT NULL DEFAULT 0,  -- 当前 ~5万字块索引
+  updated_at     TEXT NOT NULL
+);
 
-1. **过程/结果产物的判据**：判据是「读者/作者最终要的东西」(→ 结果) vs「为产出它而搭的脚手架」(→ 过程)，还是别的？据此**圣经**、**骨架**各归哪一类？
-2. **能否接受圣经/大纲遵守一套轻量小标题锚点约定**（切片可行性的前提）。
-3. 圣经九件套的标准 schema：哪些字段结构化供程序校验、哪些自由文本供模型阅读？（#6 开放问题①）
+CREATE TABLE volume (                      -- 卷 / Arc
+  id                TEXT PRIMARY KEY,       -- ARC-xxx
+  project_id        TEXT NOT NULL REFERENCES project(project_id),
+  seq               INTEGER NOT NULL,
+  name              TEXT,
+  arc_phase         TEXT NOT NULL,          -- arc_planning | arc_plan_review | writing | arc_done
+  chapters_total    INTEGER NOT NULL DEFAULT 0,
+  chapters_approved INTEGER NOT NULL DEFAULT 0,
+  deviation         INTEGER NOT NULL DEFAULT 0,  -- 实际章数 - 大纲预期
+  updated_at        TEXT NOT NULL
+);
 
-> 原「节奏统计入 DB」开放问题已随「机器状态全集中客户端」定案：入 `central.db` 的 `stat` 表。
+CREATE TABLE batch (                       -- 调度单位（每批 3-5 章）
+  id          TEXT PRIMARY KEY,
+  project_id  TEXT NOT NULL REFERENCES project(project_id),
+  volume_id   TEXT NOT NULL REFERENCES volume(id),
+  status      TEXT NOT NULL,
+  created_at  TEXT NOT NULL
+);
+
+CREATE TABLE chapter (                     -- 最细状态机载体
+  id             TEXT PRIMARY KEY,          -- CH-xxx
+  project_id     TEXT NOT NULL REFERENCES project(project_id),
+  volume_id      TEXT NOT NULL REFERENCES volume(id),
+  batch_id       TEXT REFERENCES batch(id), -- 未入批为 NULL
+  seq            INTEGER NOT NULL,
+  status         TEXT NOT NULL,             -- planned | skeleton_drafting | skeleton_review | prose_drafting | prose_review | approved | void
+  verify_flag    TEXT,                      -- clean | suspect
+  skeleton_path  TEXT,  skeleton_hash TEXT,
+  prose_path     TEXT,  prose_hash    TEXT,
+  updated_at     TEXT NOT NULL
+);
+
+CREATE TABLE artifact_ref (                -- DB↔SSOT 的桥
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  project_id   TEXT NOT NULL REFERENCES project(project_id),
+  path         TEXT NOT NULL,
+  kind         TEXT NOT NULL,              -- input | process | result
+  content_hash TEXT NOT NULL,              -- 认变更、驱动过期检测
+  version      INTEGER NOT NULL DEFAULT 1,
+  updated_at   TEXT NOT NULL
+);
+
+CREATE TABLE bible_version (               -- 圣经版本化
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  project_id  TEXT NOT NULL REFERENCES project(project_id),
+  version     INTEGER NOT NULL,
+  reason      TEXT,
+  trigger     TEXT NOT NULL,               -- void | human
+  created_at  TEXT NOT NULL
+);
+
+CREATE TABLE void_record (                 -- 作废记录
+  id             INTEGER PRIMARY KEY AUTOINCREMENT,
+  project_id     TEXT NOT NULL REFERENCES project(project_id),
+  chapter_id     TEXT NOT NULL REFERENCES chapter(id),
+  reason         TEXT,
+  affected_scope TEXT,                      -- JSON：受影响章节 id 列表
+  created_at     TEXT NOT NULL
+);
+
+CREATE TABLE stat (                        -- 节奏统计
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  project_id  TEXT NOT NULL REFERENCES project(project_id),
+  scope       TEXT NOT NULL,               -- book:{id} | chapter:{id}
+  metric      TEXT NOT NULL,               -- dialogue_ratio | hanzi | hook_density | …
+  value       REAL NOT NULL,
+  updated_at  TEXT NOT NULL
+);
+
+CREATE TABLE config (                      -- 项目配置覆盖项（默认在 defaults.toml）
+  project_id  TEXT NOT NULL REFERENCES project(project_id),
+  key         TEXT NOT NULL,
+  value       TEXT NOT NULL,
+  PRIMARY KEY (project_id, key)
+);
+
+CREATE TABLE schema_meta (                 -- 迁移用
+  schema_version INTEGER NOT NULL
+);
+```
+
+### DB↔SSOT 的桥 & 升级
+
+- **过期检测**：`artifact_ref.content_hash` + 生成日志里记录的输入切片 hash，共同支撑「圣经改了 → 哪些章节输入过期」的免费查询（见 `domain-model.md` VOID 机制）。
+- **升级**：`schema_meta.schema_version` 驱动迁移；程序升级时**只在客户端中央库跑一次**，不逐项目处理。
+
+## 五、日志（文件，非 DB）
+
+只增不改的历史流用文件，人可直接 tail、不膨胀 DB。落在**客户端**数据目录、按 `project_id` 分目录（仍属程序所有，与 SSOT 无关）：
+
+```
+mojian 客户端数据目录/logs/{project_id}/
+  generation.jsonl    每次 SDK 生成：step · agent · spec 路径+hash · 输入切片及其 hash · token 进/出 · 成本 · 时间
+  decision.jsonl      人在关卡的决定：关卡 · 判定(CONFIRMED/REVISE/VOID) · 目标(章/批) · 评论/补充 · 时间
+  check.jsonl         客观检查：目标 · 检查项 · 指标值 · 通过与否 · 时间
+```
+
+- 格式 JSONL（一行一事件），程序追加写。
+- `decision.jsonl` 的评论被装配器切进下一次生成的 bundle（对应 ink_node 的 human-review.md）。
+- `generation.jsonl` 里的输入切片 hash 供过期检测与 token 对账（AP-002）。
