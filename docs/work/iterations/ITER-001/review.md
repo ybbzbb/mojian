@@ -57,3 +57,20 @@ QA Verification：
 
 运行结论：
   所有 QA Verification 通过 ✓（2/2）。任务要求的断言（register→load 初值 style_sampling / mojian.toml 读写往返）均由 tests/project.rs 集成测试真跑通过。
+
+## TASK-005 — 2026-07-07 — ✅ 通过
+
+dev 环境：Rust 工具链 cargo 1.96.1（纯 workspace 库/CLI，无服务端；隔离 MOJIAN_HOME=mktemp 临时目录，未污染真实 ~/.mojian）
+
+QA Verification：
+  [x] cargo build --workspace 退出码 0 — 命令：`cargo build --workspace`；退出码 0；`Finished dev profile ... target(s)`
+  [x] cargo test -p mojian-core spec 退出码 0，0 failed（含四类断言） — 命令：`cargo test -p mojian-core spec`（退出码 0）+ `cargo test -p mojian-core --test spec`（退出码 0，跑全 6 用例覆盖四类断言）；tests/spec.rs `test result: ok. 6 passed; 0 failed`：
+        - tree_hash 确定性/内容敏感 → tree_hash_is_order_independent_and_content_sensitive ... ok
+        - deploy 生成部署目标（含无 spec.toml + hash==authoritative） → deploy_places_targets_without_spec_toml_and_hash_matches_authoritative ... ok
+        - drift 覆盖还原 → sync_if_drifted_restores_tampered_file ... ok / sync_if_drifted_restores_deleted_file ... ok
+        - 无 drift 不写 → sync_if_drifted_no_drift_does_not_overwrite ... ok
+        - 主副本 bootstrap + version 落地 → bootstrap_writes_master_tree_and_version ... ok
+
+运行结论：
+  所有 QA Verification 通过 ✓（2/2）。四类断言在 tests/spec.rs 6 个集成测试用例中真实覆盖并全绿。
+  备注：字面命令 `cargo test -p mojian-core spec` 中 `spec` 是名字过滤，仅匹配 1 个名字含 "spec" 的用例（其余按名字被 filtered out），故补跑 `--test spec` 跑完整 spec 集成测试二进制，确认四类断言全部真实执行且通过。

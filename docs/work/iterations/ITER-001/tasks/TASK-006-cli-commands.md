@@ -1,7 +1,7 @@
 # TASK-006 CLI 命令 new / status + run / decide 桩
 
 - iteration: ITER-001
-- status: planned
+- status: reviewing
 - type: backend
 - owner: builder-agent
 - created: 2026-07-07
@@ -32,13 +32,13 @@
 
 ## Builder Exit Criteria
 
-- [ ] clap（derive）定义 4 个子命令 `new` / `status` / `run` / `decide`，`--help` 与版本可用；`new` 接收必填 `<dir>`，`status` 接收可选 `--path <dir>`（默认当前工作目录），`decide` 接受并忽略尾随参数
-- [ ] `spec_assets.rs` 用 `include_dir!("$CARGO_MANIFEST_DIR/assets/spec")` 嵌入占位主副本并传入 core bootstrap；首次运行时确保 `<data_dir>` 与 `<data_dir>/spec/` 落地
-- [ ] `new.rs` 按 tech-design 有序 6 步实现：校验 `<dir>`（已含 `mojian.toml` → 报错非 0 退出）→ 确保数据目录/建库/主副本 bootstrap → `register_project`（事务，初始 `style_sampling`）→ `deploy_spec` 得 version/hash → `update_project_spec` 写回 project 行（REQ-014）→ `write_manifest`；stdout 输出 `project_id` + 绝对 `path` + 初始 phase `style_sampling`；exit 0
-- [ ] `status.rs`：读目标目录 `mojian.toml` 取 `project_id`（缺失 → 报错「非 mojian 项目」非 0 退出）→ `sync_if_drifted` 打开时 hash 覆盖（不一致则重部署并 `update_project_spec`）→ `load_project_state` 读 `sop_phase` 并打印项目名 + 当前 SOP phase；exit 0
-- [ ] `run.rs` / `decide.rs`：打印 `stub，将在 ITER-002 实现` 并 exit 0（`decide` 忽略尾随参数）
-- [ ] 集成测试（`crates/mojian-cli/tests/`，用 `MOJIAN_HOME` 指向临时目录）覆盖 new→status 正常路径与「非 mojian 项目」错误路径，均通过
-- [ ] `cargo check --workspace` / `cargo build --workspace` 0 error；命名遵循 docs/naming.md
+- [x] clap（derive）定义 4 个子命令 `new` / `status` / `run` / `decide`，`--help` 与版本可用；`new` 接收必填 `<dir>`，`status` 接收可选 `--path <dir>`（默认当前工作目录），`decide` 接受并忽略尾随参数
+- [x] `spec_assets.rs` 用 `include_dir!("$CARGO_MANIFEST_DIR/assets/spec")` 嵌入占位主副本并传入 core bootstrap；首次运行时确保 `<data_dir>` 与 `<data_dir>/spec/` 落地
+- [x] `new.rs` 按 tech-design 有序 6 步实现：校验 `<dir>`（已含 `mojian.toml` → 报错非 0 退出）→ 确保数据目录/建库/主副本 bootstrap → `register_project`（事务，初始 `style_sampling`）→ `deploy_spec` 得 version/hash → `update_project_spec` 写回 project 行（REQ-014）→ `write_manifest`；stdout 输出 `project_id` + 绝对 `path` + 初始 phase `style_sampling`；exit 0
+- [x] `status.rs`：读目标目录 `mojian.toml` 取 `project_id`（缺失 → 报错「非 mojian 项目」非 0 退出）→ `sync_if_drifted` 打开时 hash 覆盖（不一致则重部署并 `update_project_spec`）→ `load_project_state` 读 `sop_phase` 并打印项目名 + 当前 SOP phase；exit 0
+- [x] `run.rs` / `decide.rs`：打印 `stub，将在 ITER-002 实现` 并 exit 0（`decide` 忽略尾随参数）
+- [x] 集成测试（`crates/mojian-cli/tests/`，用 `MOJIAN_HOME` 指向临时目录）覆盖 new→status 正常路径与「非 mojian 项目」错误路径，均通过
+- [x] `cargo check --workspace` / `cargo build --workspace` 0 error；命名遵循 docs/naming.md
 
 ## QA Verification
 
@@ -62,3 +62,12 @@
 ## Log
 
 - 2026-07-07 [planning-agent] status — → planned：创建任务
+- 2026-07-07 [builder-agent] status planned → ready → in_progress：认领任务（前置 TASK-004/005 均 done）
+- 2026-07-07 [builder-agent] status in_progress → reviewing：落地 mojian-cli 命令面（clap4 derive main + new/status + run/decide 桩 + spec_assets include_dir 注入 core bootstrap），端到端收口 mojian new / status。Build Verification（cargo check/build --workspace 0 error、cargo test --workspace 28 passed 0 failed、真实二进制 QA 全项通过）与 Builder Exit Criteria 7/7 全部通过
+  - EC1 clap 4 子命令：`--version`=`mojian 0.1.0`、`--help` 列出 new/status/run/decide；new 必填 dir、status 可选 --path、decide trailing_var_arg 接受并忽略尾随参数
+  - EC2 spec_assets.rs `include_dir!("$CARGO_MANIFEST_DIR/assets/spec")` 经 `ensure_master(&SPEC_ASSETS, master)` 注入 core；首运确保 `<data_dir>` 与 `<data_dir>/spec/` 落地（真跑后 central.db + spec 主副本就位）
+  - EC3 new 6 步：拒绝重复初始化（exit 1）→ ensure 数据目录/建库/bootstrap → register_project（事务，初始 style_sampling）→ deploy_spec → update_project_spec（REQ-014 两列非空）→ write_manifest；stdout 打印 project_id/绝对 path（未 canonicalize，与 $PROJ 一致）/style_sampling，exit 0
+  - EC4 status 3 步：缺 mojian.toml → 「非 mojian 项目」exit 1；sync_if_drifted 覆盖（篡改 CLAUDE.md 后 status 还原，tampered count=0，漂移时回填 spec 列）；打印 project + phase style_sampling，exit 0
+  - EC5 run/decide 打印「stub，将在 ITER-002 实现」exit 0；decide CH-001 CONFIRMED 忽略尾随参数
+  - EC6 集成测试 tests/cli.rs 5 用例（happy new→status / 非 mojian 错误 / 拒绝重复初始化 / 篡改还原 / 桩）全通过，均以 MOJIAN_HOME 隔离临时目录
+  - EC7 cargo check/build --workspace 0 error；命名遵循 docs/naming.md（snake_case 文件、PascalCase 类型、kebab-case crate）

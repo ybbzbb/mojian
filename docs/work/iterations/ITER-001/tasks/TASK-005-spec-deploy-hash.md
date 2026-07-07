@@ -1,7 +1,7 @@
 # TASK-005 SPEC 主副本、部署与 hash 覆盖
 
 - iteration: ITER-001
-- status: reviewing
+- status: done
 - type: backend
 - owner: builder-agent
 - created: 2026-07-07
@@ -40,8 +40,8 @@
 
 ## QA Verification
 
-- [ ] `cargo build --workspace` 退出码 0
-- [ ] `cargo test -p mojian-core spec` 退出码 0，0 failed（含 tree_hash 确定性/内容敏感、deploy 生成部署目标、drift 覆盖还原、无 drift 不写四类断言）
+- [x] `cargo build --workspace` 退出码 0
+- [x] `cargo test -p mojian-core spec` 退出码 0，0 failed（含 tree_hash 确定性/内容敏感、deploy 生成部署目标、drift 覆盖还原、无 drift 不写四类断言）
 
 ## Dependencies
 
@@ -55,3 +55,4 @@
 - 2026-07-07 [builder-agent] 实现 spec 模块：assets/spec 占位载荷树；hash.rs（tree_hash 相对路径升序 + 逐文件内容 blake3 + 整体 blake3，顺序无关内容敏感）；master.rs（include_dir 嵌入 EMBEDDED_SPEC + ensure_master bootstrap + authoritative_version/hash，排除 spec.toml）；deploy.rs（deploy_spec 先删部署目标再 1:1 拷载荷；sync_if_drifted 实时重算项目部署树 hash 比对，漂移则覆盖重部署）；lib.rs re-export；Cargo.toml 追加 blake3/include_dir。error.rs 不在 Allowed Files，复用 CoreError::Io。
 - 2026-07-07 [builder-agent] Builder Exit Criteria 逐条验证：assets 树/version 由 bootstrap 测试断言；tree_hash 顺序无关+内容敏感由 hash 测试断言；deploy 生成 4 类部署目标且无 spec.toml、返回 hash==authoritative_hash；drift 篡改/删除均触发覆盖还原、无 drift 不写——tests/spec.rs 6 passed / 0 failed。Build Verification：cargo check -p mojian-core 0 error、cargo build --workspace exit 0、cargo test -p mojian-core 全绿（23 passed）。未越 Allowed Files，未引入基线外依赖（blake3/include_dir 已在 workspace.dependencies 声明）。
 - 2026-07-07 [builder-agent] status in_progress → reviewing：SPEC 主副本 bootstrap + 部署 + blake3 tree hash 漂移覆盖落地；Build Verification 与 Builder Exit Criteria 全部通过
+- 2026-07-07 [qa-agent] status reviewing → done：QA Verification 2/2 通过（build --workspace exit 0；spec 集成测试 6 passed / 0 failed，四类断言 tree_hash 确定性内容敏感 / deploy 生成部署目标无 spec.toml / drift 覆盖还原 / 无 drift 不写 均真实执行通过）

@@ -32,6 +32,7 @@ steps:
 | builder-agent | TASK-004 | N/A | N/A | 2026-07-07 |
 | qa-agent | TASK-004 | N/A | N/A | 2026-07-07 |
 | builder-agent | TASK-005 | N/A | N/A | 2026-07-07 |
+| qa-agent | TASK-005 | N/A | N/A | 2026-07-07 |
 
 ## builder-agent — 2026-07-07
 
@@ -152,3 +153,27 @@ steps:
 - [x] log.md 追加 TASK-005 — done
 - [x] issue #9 builder-agent TASK-005 comment — done
 - [x] issue #10 builder-agent TASK-005 comment — done
+
+## qa-agent (TASK-005) — 2026-07-07
+
+steps:
+- [x] dev 环境探测：cargo 1.96.1 可用，隔离 MOJIAN_HOME=mktemp 临时目录 — done
+- [x] QA-1 cargo build --workspace 退出码 0 — done
+- [x] QA-2 cargo test -p mojian-core spec 退出码 0；补跑 --test spec 全 6 用例 0 failed，四类断言真实覆盖 — done
+- [x] TASK-005 status reviewing → done — done
+- [x] review.md 追加 TASK-005 通过记录 — done
+
+## builder-agent (TASK-006) — 2026-07-07
+
+steps:
+- [x] TASK-006 status planned → ready → in_progress — done
+- [x] 实现 mojian-cli 命令面（main clap4 分发 + new/status + run/decide 桩 + spec_assets include_dir 注入 core bootstrap）+ tests/cli.rs — done
+- [x] Build Verification（cargo check/build --workspace 0 error / cargo test --workspace 28 passed 0 failed / 真实二进制端到端 QA 全项通过） — done
+- [x] TASK-006 status in_progress → reviewing — done
+- [x] log.md 追加 TASK-006 — done
+- [x] issue #9 builder-agent TASK-006 comment — done
+- [x] issue #10 builder-agent TASK-006 comment — done
+
+## Token Log
+
+| builder-agent | TASK-006 | N/A | N/A | 2026-07-07 |

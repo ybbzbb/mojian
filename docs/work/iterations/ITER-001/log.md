@@ -125,3 +125,31 @@ Build Verification：
 Builder Exit Criteria：6/6 通过
 
 已知风险：无。CLI 侧（mojian new/status）对 ensure_master/deploy_spec/sync_if_drifted 的编排、DB spec_hash 回填由 TASK-006 收口。
+
+## TASK-006 — 2026-07-07
+
+变更文件：
+- crates/mojian-cli/src/main.rs（重写，clap4 derive Cli/Command + 分发，顶层据 anyhow::Result 决定 ExitCode）
+- crates/mojian-cli/src/spec_assets.rs（新增，`include_dir!("$CARGO_MANIFEST_DIR/assets/spec")` 嵌入占位主副本）
+- crates/mojian-cli/src/commands/mod.rs（新增，子命令模块登记）
+- crates/mojian-cli/src/commands/new.rs（新增，`mojian new <dir>` 有序 6 步）
+- crates/mojian-cli/src/commands/status.rs（新增，`mojian status [--path]` 有序 3 步）
+- crates/mojian-cli/src/commands/run.rs（新增，桩）
+- crates/mojian-cli/src/commands/decide.rs（新增，桩，trailing_var_arg 忽略尾随参数）
+- crates/mojian-cli/Cargo.toml（修改，仅追加 [dependencies]：mojian-core(path) / clap / anyhow / include_dir）
+- crates/mojian-cli/tests/cli.rs（新增，驱动真实二进制的 5 项端到端集成测试）
+
+实现摘要：把 TASK-001~005 的 core 能力编排成端到端命令面。main.rs 用 clap v4 derive 定义 `new/status/run/decide` 四子命令并分发，子命令统一返回 `anyhow::Result<()>`，`main` 返回 `ExitCode`（Ok→0、Err→打印 `错误：{err:#}` 到 stderr 并退 1）。new.rs：先以 `<dir>/mojian.toml` 是否存在判定并拒绝重复初始化（exit≠0），创建目录并取绝对路径（自研 absolutize，只在相对时 join cwd、不 canonicalize，避免 macOS `/var`→`/private/var` 漂移使 stdout 与 `$PROJ` 不符）；再 ensure 数据目录 + `ensure_master(&SPEC_ASSETS, master)` bootstrap + `open_central_db` 建库；`register_project`（事务，初始 style_sampling，name=目录 basename）→ `deploy_spec(master, project)` 得 (version, hash) → `update_project_spec` 回填 project 行（REQ-014）→ `write_manifest`；stdout 打印 project_id/绝对 path/style_sampling。status.rs：缺 mojian.toml → bail「非 mojian 项目」（exit≠0）；read_manifest 取 project_id；ensure_master + open_central_db；`sync_if_drifted(project, authoritative_hash, master)` 打开时 hash 覆盖，漂移则以 authoritative_version + new_hash 回填 DB；`load_project_state` 读 phase，打印 project(目录 basename)+phase。run/decide 打印「stub，将在 ITER-002 实现」并 exit 0，decide 以 `trailing_var_arg` 接受并忽略尾随参数。
+
+范围说明：spec_assets.rs 独立在 CLI 侧用 include_dir 嵌入 `assets/spec`，经 core 参数化的 `ensure_master(&Dir, ...)` 注入 bootstrap（对齐 TASK-005 落位接口）。status 的项目名取自目标目录 basename（等价于 new 时存入 DB 的 name），以此避免在 CLI 直接依赖 rusqlite——Cargo.toml 仅追加任务 Allowed Files 枚举的 mojian-core/clap/anyhow/include_dir 四项，无越界新依赖。未触碰 crates/mojian-core/src/** 与 assets/**。
+
+Build Verification：
+- `cargo check --workspace` → Finished, 0 error
+- `cargo build --workspace` → exit 0（触发依赖变更打包档）
+- `cargo test -p mojian-cli` → tests/cli.rs 5 passed, 0 failed
+- `cargo test --workspace` → 全绿（cli 5 + core lib 9 + db 3 + paths 1 + project 4 + spec 6 = 28 passed, 0 failed）
+- 真实二进制端到端（MOJIAN_HOME=mktemp 隔离）：new→13 表/schema_version=1/manifest 含 project_id+spec_version/部署目标就位/spec.toml 不部署/project 行 spec 两列非空；status→style_sampling；篡改 CLAUDE.md 后 status 还原（tampered count=0）；run/decide 桩 exit 0；空目录 status exit 1「非 mojian 项目」；重复 new exit 1
+
+Builder Exit Criteria：7/7 通过
+
+已知风险：无。QA Verification（含 sqlite3 断言）待 qa-agent 接手真跑。
