@@ -2,29 +2,34 @@
 
 > 执行器：项目文件布局、部署、SDK 调用、切片装配、人机决定接口、客观检查器（设计草案，planned）。核心循环见 `overview.md`；存储落地见 `storage.md`。
 
-## 项目文件布局（运行时全景）
+## 项目文件布局（运行环境）
 
-`mojian new <项目>` 后，一个项目目录同时容纳三层：
+项目 = 运行环境，目录里**只有两类东西**：SPEC 部署缓存 + SSOT。**机器状态不在这里**——它在客户端中央 DB，靠 `mojian.toml` 的 `project_id` 关联（作用域总览见 `overview.md`，客户端布局与表设计见 `storage.md`）。
 
 ```
 {项目}/
-  # —— SPEC（部署副本，claude 原生读）——
-  .claude/agents/*.md        SOP agent SPEC
-  .claude/skills/            skills
-  CLAUDE.md                  项目级指令
-  prompts/                   写作指南等 agent 会 Read 的资产
+  # —— SPEC 部署缓存（可弃，claude 原生读；启动时 hash 覆盖）——
+  .claude/agents/*.md   .claude/skills/   CLAUDE.md   prompts/
 
   # —— SSOT（创作内容，人直读直改）——
   references/book/*.txt      输入：参考小说原文
   materials/ creative/ bible/ outline/ volumes/   过程/结果产物（布局见 storage.md）
 
-  # —— DB（机器状态）——
-  .mojian/state.db           本地 SQLite（状态机 · 统计 · 日志 · 配置）
+  mojian.toml                身份标记：project_id（非机器状态）
 ```
 
-**部署 = SPEC 怎么到模型手里**：主副本在客户端，`mojian new` 拷进项目的 `.claude/agents` 等（见 `storage.md`）。之后在项目目录里跑 `claude` 就能原生读到 agent。
+## 启动执行流
 
-**Rust 仍拥有状态机**：部署只解决「SPEC 落哪」；「什么时候跑、跑哪个 agent、喂哪些切片、能写哪些文件」由 Rust 状态机决定，零 token。二者不冲突——这保住 AP-001（状态机是代码不是散文）。
+```
+1. 打开项目 → 读 mojian.toml 拿 project_id
+2. 比对项目 SPEC 缓存 hash vs 客户端权威 → 不一致直接覆盖重部署（选项 A：项目内 SPEC 纯可弃）
+3. 从客户端中央 DB 取该项目状态
+4. 进入核心循环（见下）：装配 → 调 claude → 客观检查 → 状态/日志/统计写回客户端 DB
+```
+
+**部署 = SPEC 怎么到模型手里**：权威在客户端，覆盖进项目的 `.claude/agents` 等，之后项目内跑 `claude` 就原生读到 agent。
+
+**Rust 拥有状态机**：部署只解决「SPEC 落哪」；「什么时候跑、跑哪个 agent、喂哪些切片、能写哪些文件」由 Rust 状态机决定，读写的是客户端中央状态，零 token。这保住 AP-001（状态机是代码不是散文）。
 
 ## SDK 调用：Rust → 无头 `claude` 子进程
 

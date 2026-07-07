@@ -37,9 +37,11 @@ ink_node 每章有 `skeleton_verifying`（LLM 逐章验证骨架）。mojian 按
 
 ## 领域实体（概念层，字段详见 `storage.md`）
 
+> 下列实体的机器状态**全部存在客户端中央 DB**（按 `project_id` 分区），不在项目目录里。项目目录只是运行环境（SSOT + SPEC 缓存）。作用域见 `overview.md`。
+
 | 实体 | 说明 | 关键状态/属性 |
 |---|---|---|
-| Project | 一个小说项目 | 当前 SOP phase、当前卷、游标 |
+| Project | 一个小说项目（= 一个运行环境目录） | 当前 SOP phase、当前卷、游标、部署 SPEC 版本 |
 | ReferenceBook | 参考小说 | 抽取游标（块级） |
 | Volume（卷/Arc） | SOP③ 的循环单位 | arc phase |
 | Batch（批次） | SOP③ 的调度单位（每批 3-5 章） | 批状态 |
