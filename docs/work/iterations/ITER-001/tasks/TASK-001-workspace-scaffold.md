@@ -1,7 +1,7 @@
 # TASK-001 Cargo workspace 骨架 + 依赖基线 + 数据目录解析
 
 - iteration: ITER-001
-- status: reviewing
+- status: done
 - type: backend
 - owner: builder-agent
 - created: 2026-07-07
@@ -63,3 +63,4 @@
   - `cargo test -p mojian-core` 通过（集成测试 tests/paths.rs：设 MOJIAN_HOME 后 data_dir()==该目录、central_db_path()==<home>/central.db）
   - 命名遵循 docs/naming.md（crate mojian- 前缀 kebab-case、模块 snake_case、类型 PascalCase）
   - 环境说明：本机初始无 cargo，已安装 Rust stable 1.96.1（rustup minimal）以执行 Build Verification
+- 2026-07-07 [qa-agent] status reviewing → done：QA Verification 4/4 通过（cargo 1.96.1 真跑）

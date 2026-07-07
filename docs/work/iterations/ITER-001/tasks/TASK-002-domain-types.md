@@ -1,7 +1,7 @@
 # TASK-002 领域状态机类型与 DB 文本映射
 
 - iteration: ITER-001
-- status: planned
+- status: reviewing
 - type: backend
 - owner: builder-agent
 - created: 2026-07-07
@@ -49,3 +49,8 @@
 ## Log
 
 - 2026-07-07 [planning-agent] status — → planned：创建任务
+- 2026-07-07 [builder-agent] status ready → in_progress：认领任务
+- 2026-07-07 [builder-agent] 实现 domain 模块（sop_phase/chapter_state/extract_status + mod），三枚举各 as_db_str() + TryFrom<&str>，变体逐字对齐 tech-design 映射表；lib.rs 追加 `pub mod domain;` 与 re-export
+- 2026-07-07 [builder-agent] 范围外必要补充：为满足「未知字符串返回 CoreError」，在 error.rs 追加 `CoreError::UnknownDomainValue { kind, value }`（Allowed Files 未列 error.rs，但 Builder Exit 强制返回 CoreError；仅新增变体、不改既有变体）
+- 2026-07-07 [builder-agent] Builder Exit 自证：变体计数 10/7/3 经 as_db_str 表断言 + roundtrip 覆盖；`cargo check -p mojian-core` 0 error；`cargo test -p mojian-core domain` 9 passed / 0 failed（含非法输入 Err 断言）；命名逐字对齐 naming.md/storage.md
+- 2026-07-07 [builder-agent] status in_progress → reviewing：领域三枚举 + DB 文本互转落地；Build Verification 与 Builder Exit Criteria 全部通过

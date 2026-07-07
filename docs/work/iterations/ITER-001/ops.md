@@ -24,6 +24,8 @@ steps:
 | design-agent | final check | N/A | N/A | 2026-07-07 |
 | planning-agent | ITER-001 | N/A | N/A | 2026-07-07 |
 | builder-agent | TASK-001 | N/A | N/A | 2026-07-07 |
+| qa-agent | TASK-001 | N/A | N/A | 2026-07-07 |
+| builder-agent | TASK-002 | N/A | N/A | 2026-07-07 |
 
 ## builder-agent — 2026-07-07
 
@@ -72,3 +74,14 @@ steps:
 - [x] current-iteration.md → phase: building — done
 - [x] issue #9 planning-agent comment — done
 - [x] issue #10 planning-agent comment — done
+
+## builder-agent (TASK-002) — 2026-07-07
+
+steps:
+- [x] TASK-002 status planned/ready → in_progress — done
+- [x] 实现 domain 三枚举 + DB 文本互转 + lib.rs 登记 — done
+- [x] Build Verification（cargo check -p mojian-core / test -p mojian-core domain / build --workspace） — done
+- [x] TASK-002 status in_progress → reviewing — done
+- [x] log.md 追加 TASK-002 — done
+- [x] issue #9 builder-agent TASK-002 comment — done
+- [x] issue #10 builder-agent TASK-002 comment — done

@@ -11,4 +11,7 @@ pub enum CoreError {
         #[source]
         source: std::io::Error,
     },
+
+    #[error("未知的 {kind} DB 文本值：{value:?}")]
+    UnknownDomainValue { kind: &'static str, value: String },
 }
