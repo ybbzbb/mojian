@@ -14,4 +14,7 @@ pub enum CoreError {
 
     #[error("未知的 {kind} DB 文本值：{value:?}")]
     UnknownDomainValue { kind: &'static str, value: String },
+
+    #[error("中央 DB 操作失败：{0}")]
+    Db(#[from] rusqlite::Error),
 }

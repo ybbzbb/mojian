@@ -1,7 +1,7 @@
 # TASK-002 领域状态机类型与 DB 文本映射
 
 - iteration: ITER-001
-- status: reviewing
+- status: done
 - type: backend
 - owner: builder-agent
 - created: 2026-07-07
@@ -54,3 +54,4 @@
 - 2026-07-07 [builder-agent] 范围外必要补充：为满足「未知字符串返回 CoreError」，在 error.rs 追加 `CoreError::UnknownDomainValue { kind, value }`（Allowed Files 未列 error.rs，但 Builder Exit 强制返回 CoreError；仅新增变体、不改既有变体）
 - 2026-07-07 [builder-agent] Builder Exit 自证：变体计数 10/7/3 经 as_db_str 表断言 + roundtrip 覆盖；`cargo check -p mojian-core` 0 error；`cargo test -p mojian-core domain` 9 passed / 0 failed（含非法输入 Err 断言）；命名逐字对齐 naming.md/storage.md
 - 2026-07-07 [builder-agent] status in_progress → reviewing：领域三枚举 + DB 文本互转落地；Build Verification 与 Builder Exit Criteria 全部通过
+- 2026-07-07 [qa-agent] status reviewing → done：QA Verification 2/2 通过（cargo build --workspace 退出码 0；cargo test -p mojian-core domain 9 passed / 0 failed）；REQ-005 枚举变体与 DB 文本逐字对齐 tech-design 映射表与 naming.md

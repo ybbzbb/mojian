@@ -49,3 +49,27 @@ Build Verification：
 Builder Exit Criteria：6/6 通过
 
 已知风险：无。
+
+## TASK-003 — 2026-07-07
+
+变更文件：
+- crates/mojian-core/src/db/schema.rs（新增，SCHEMA_VERSION=1 + V1_SCHEMA_SQL 逐字 12 表 DDL）
+- crates/mojian-core/src/db/migrate.rs（新增，键于 schema_meta 的有序步骤迁移运行器）
+- crates/mojian-core/src/db/mod.rs（新增，唯一 DB 入口 open_central_db）
+- crates/mojian-core/src/lib.rs（修改，追加 `pub mod db;` 与 `pub use db::{open_central_db, SCHEMA_VERSION}`）
+- crates/mojian-core/src/error.rs（修改，追加 `CoreError::Db(#[from] rusqlite::Error)`）
+- crates/mojian-core/Cargo.toml（修改，追加 rusqlite 依赖 + [dev-dependencies] rusqlite）
+- crates/mojian-core/tests/db.rs（新增，建库集成测试）
+
+实现摘要：在 mojian-core 落地客户端中央 SQLite 建库与迁移。schema.rs 持 SCHEMA_VERSION: i64 = 1 与逐字对齐 storage.md「五」的 12 表 DDL（project / project_state / reference_book / volume / batch / chapter / artifact_ref / bible_version / void_record / stat / config / schema_meta）。migrate.rs 实现自研迁移运行器，键于 schema_meta.schema_version（非 PRAGMA user_version）：事务外先 `PRAGMA foreign_keys = ON`，事务内按有序编号步骤升级——全新库（无 schema_meta 表）从版本 0 跑 v1 建全 12 表并 `INSERT schema_meta(schema_version)=1`，已有库读版本、v1 无后续步骤（no-op），整体事务失败回滚。mod.rs 的 open_central_db(path) = 打开连接 → 跑迁移 → 返回 Connection，是所有 DB 访问的唯一入口。
+
+范围说明：error.rs、Cargo.toml 的 [dev-dependencies] 属 Allowed Files 外/附加改动——error.rs 仅追加 `Db(#[from] rusqlite::Error)` 变体（open_central_db 需将 rusqlite 错误转 CoreError），dev-dependencies rusqlite 供集成测试命名 Connection 类型路径；均仅追加不改旧。rusqlite 已在 workspace.dependencies 基线声明（tech-design 选型 1），无新增未声明依赖。已在任务 Log 显式记录。
+
+Build Verification：
+- `cargo check -p mojian-core` → Finished, 0 error
+- `cargo test -p mojian-core db` → 3 passed, 0 failed（12 表建库断言 / schema_version==1 断言 / 二次打开幂等断言含 schema_meta 单行 / foreign_keys=1）
+- `cargo build --workspace` → exit 0，mojian 二进制生成
+
+Builder Exit Criteria：5/5 通过
+
+已知风险：无。v1 一次性建全表，后续列增改走同一 schema_meta 有序步骤迁移器（已预留 MIGRATIONS 步骤形状与版本戳 UPDATE 分支）。

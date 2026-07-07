@@ -26,6 +26,8 @@ steps:
 | builder-agent | TASK-001 | N/A | N/A | 2026-07-07 |
 | qa-agent | TASK-001 | N/A | N/A | 2026-07-07 |
 | builder-agent | TASK-002 | N/A | N/A | 2026-07-07 |
+| qa-agent | TASK-002 | N/A | N/A | 2026-07-07 |
+| builder-agent | TASK-003 | N/A | N/A | 2026-07-07 |
 
 ## builder-agent — 2026-07-07
 
@@ -85,3 +87,24 @@ steps:
 - [x] log.md 追加 TASK-002 — done
 - [x] issue #9 builder-agent TASK-002 comment — done
 - [x] issue #10 builder-agent TASK-002 comment — done
+
+## qa-agent (TASK-002) — 2026-07-07
+
+steps:
+- [x] dev 环境探测：cargo 1.96.1 可用，隔离 MOJIAN_HOME 临时目录 — done
+- [x] QA-1 cargo build --workspace 退出码 0 — done
+- [x] QA-2 cargo test -p mojian-core domain 9 passed / 0 failed — done
+- [x] REQ-005 枚举变体 ↔ DB 文本 ↔ tech-design 映射表/naming.md 逐字一致抽查 — done
+- [x] TASK-002 status reviewing → done — done
+- [x] review.md 追加 TASK-002 通过记录 — done
+
+## builder-agent (TASK-003) — 2026-07-07
+
+steps:
+- [x] TASK-003 status planned → ready → in_progress — done
+- [x] 实现 db 模块（schema v1 12 表 / schema_meta 迁移器 / open_central_db 唯一入口）+ lib.rs 登记 + error.rs 追加 Db 变体 + Cargo.toml rusqlite — done
+- [x] Build Verification（cargo check -p mojian-core / cargo test -p mojian-core db 3 passed 0 failed / cargo build --workspace exit 0） — done
+- [x] TASK-003 status in_progress → reviewing — done
+- [x] log.md 追加 TASK-003 — done
+- [x] issue #9 builder-agent TASK-003 comment — done
+- [x] issue #10 builder-agent TASK-003 comment — done
