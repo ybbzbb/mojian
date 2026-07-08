@@ -61,3 +61,19 @@ QA Verification：
 
 运行结论：
   所有 QA Verification 通过 ✓（3/3）；assemble_bundle 端到端在隔离环境真跑，五字段 Bundle 装配 + write_scope 推导 + 段级/整文件 blake3 content_hash + decision.jsonl 人类评论回喂（REQ-011）均以真实磁盘断言验证；剩余 TASK-005/006 仍为 planned，迭代未关闭，phase 保持 building
+
+## TASK-005 — 2026-07-08 — ✅ 通过
+
+dev 环境：Rust workspace（devops.md Build Verification 口径），无外部服务；MOJIAN_HOME 指向 mktemp 隔离目录；`cargo build --workspace` EXIT=0
+
+QA Verification：
+  [x] `MOJIAN_HOME=<临时目录> cargo test -p mojian-core --test engine_loop` 退出码 0 — 命令：`cargo test -p mojian-core --test engine_loop`；响应：`test result: ok. 3 passed; 0 failed`，ENGINE_LOOP_EXIT=0（集成测试在隔离临时 DB open_central_db+register_project 登记项目、种子 volume/chapter 行，真实调用 apply_generation/apply_decision 并回读 DB 断言）
+  [x] apply_generation 后 cursors 含 pending_gate=="brief"；apply_decision(CONFIRMED, brief) 后 pending_gate 清除且 sop_phase=="vision_drafting" — test `generation_sets_brief_gate_then_confirm_advances`；响应：回读 `project_state.cursors` 反序列化断言 `value["pending_gate"]=="brief"` 且 artifact_ref(kind='input') COUNT==2；CONFIRMED 后断言 `pending_gate.is_none()` 且 `sop_phase=="vision_drafting"` 全 ok
+  [x] 种子 status=="void" chapter，apply_decision(VOID, CH-7) 后 void_record 新增一行且 chapter status=="planned"（裁决③ 最小语义） — test `void_chapter_records_and_resets_to_planned`；响应：种子 CH-7 status='void'，apply_decision(VOID, Some("CH-7")) 后断言 `void_record WHERE chapter_id='CH-7' COUNT==1` 且 `chapter status=="planned"`（不级联）ok
+
+附加验证（Builder Exit 回归口）：
+  [x] `cargo test -p mojian-core engine` — engine_loop 3 passed + 模块单测 5 passed；0 failed（next_action 每条 phase→action 映射：style_phases→Advance / brief_drafting→Generate / pending_gate 优先 HumanGate / unwired→Idle；Verdict 往返；检查步位空过守裁决①）
+  [x] `cargo test -p mojian-core state` — 10 passed; 0 failed（advance_sop_phase/set_gate/clear_gate cursors JSON 保留其他游标键 / load_chapter / update_chapter_status / insert_void_record / upsert_artifact_ref 走 rusqlite）
+
+运行结论：
+  所有 QA Verification 通过 ✓（3/3）；apply_generation 置 brief 关卡 + artifact_ref 落库、apply_decision 三判定（CONFIRMED 推进 vision_drafting / REVISE 回退 brief_drafting / VOID 最小语义 void→planned+void_record）均以真实隔离 DB 回读断言验证；next_action 纯函数分支与检查步位空过（裁决①）由 engine/state 单测覆盖。剩余 TASK-006 仍为 planned，迭代未关闭，phase 保持 building

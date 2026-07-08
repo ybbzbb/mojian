@@ -1,7 +1,7 @@
 # TASK-005 engine + state 模块：next_action / apply_* + 运行时 DB 行读写
 
 - iteration: ITER-002
-- status: reviewing
+- status: done
 - type: backend
 - owner: builder-agent
 - created: 2026-07-07
@@ -68,3 +68,4 @@
   - Exit⑧（单元测试覆盖映射）：见 Exit③ 四个单测 + state 模块 6 个单测。
   - Exit⑨（命名）：phase 名逐字对齐 SopPhase，函数 snake_case 动词开头，Verdict 变体 PascalCase。
   - Build Verification：`cargo check -p mojian-core` 与 `cargo check --workspace` 0 error（未改 Cargo.toml，serde_json 既有依赖，无新依赖、无 schema 迁移，未触发打包校验条件）；`cargo test -p mojian-core --lib` 54 passed；`MOJIAN_HOME=<tmp> cargo test -p mojian-core --test engine_loop` 3 passed（EXIT=0）。
+- 2026-07-08 [qa-agent] status reviewing → done：QA Verification 3/3 通过（cargo build --workspace EXIT=0；engine_loop 3 passed 真跑落库回读；apply_generation→pending_gate=="brief"+artifact_ref 2 行；apply_decision(CONFIRMED,brief)→pending_gate 清除+sop_phase=="vision_drafting"；VOID(CH-7)→void_record 新增 1 行+chapter status=="planned"；engine 5 单测 / state 10 单测 0 failed）

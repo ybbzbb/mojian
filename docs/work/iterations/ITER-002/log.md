@@ -79,3 +79,18 @@ Build Verification：`cargo check -p mojian-core` 与 `cargo check --workspace` 
 Builder Exit Criteria：9/9 通过。
 
 已知风险：apply_decision 的 CONFIRMED 推进目标目前仅对 brief 关卡硬编码到 vision_drafting（本迭代唯一完整关卡），更深 SOP 关卡的推进映射待后续迭代接线时补；章节关卡（skeleton_review）不入 cursors 标记、REVISE 回退依赖调用方传 target，与 tech-design「章节关卡本身即关卡」一致。VOID 只记录 + 单章 void→planned，不做圣经级联 / 输入 hash 过期检测（留位不留债，归 ITER-003 消费本迭代写入的 artifact_ref.content_hash）。
+
+## TASK-006 — 2026-07-08
+
+变更文件：
+- crates/mojian-cli/src/commands/run.rs（桩 → 真逻辑：定位项目 + sync_if_drifted + 循环 next_action + Generate 装配调 runner 落 generation.jsonl 置 brief 关卡 + Advance 顺推占位 phase + HumanGate/Idle 出口 + now_iso8601 std 时间戳）
+- crates/mojian-cli/src/commands/decide.rs（桩 → 真逻辑：clap 解析 gate/verdict/target/--comment|--file + pending_gate 匹配校验 + append_decision + apply_decision）
+- crates/mojian-cli/src/commands/status.rs（扩展：pending_gate 存在时追加卡点提示 REQ-008）
+- crates/mojian-cli/tests/cli.rs（桩用例 run_and_decide_are_stubs → 端到端 run_decide_run_end_to_end，MOJIAN_HOME 隔离 + MOJIAN_CLAUDE_CMD 假命令驱动真实二进制）
+
+实现摘要：收口 IMPL-4「生成闭环」的 CLI 通路（选型 6-A：状态机在 core，CLI 薄）。run 定位项目（读 mojian.toml 取 project_id）→ 复用 status 同口径的 ensure_master/open_db/sync_if_drifted 打开时 hash 覆盖 → 循环 engine::next_action：Advance 只在占位前置 phase（style_sampling→style_extracting→brief_drafting）纯推进；Generate → context::assemble_bundle → ClaudeCliRunner.run（基础命令读 MOJIAN_CLAUDE_CMD）→ 组 GenerationEvent（step/agent/spec_path/spec_hash/inputs/token_in/out/cost/ts）append_generation → apply_generation 置 brief 关卡 → 停并打印卡点；HumanGate 停机打印；Idle 正常退出（含 MAX_STEPS 空转保护）。generation.jsonl 的 inputs 把本步回喂的人类关卡评论（read_decision_comments gate=brief）记为输入切片（REQ-011），使评论文本随事件落盘。decide 用 clap 解析 gate/verdict/target 与互斥的 --comment/--file（--file 读文件内容作评论），校验 read_pending_gate 与请求 gate 一致（否则返回 CoreError::GateStateMismatch，非 0 退出、不 panic）后 append_decision + engine::apply_decision（CONFIRMED 推进 vision_drafting / REVISE 回退 brief_drafting 回喂 / VOID 章节最小语义）。status 在既有 project/phase 后按 read_pending_gate 追加「卡在 <gate> 关卡 / 等待判定：CONFIRMED|REVISE|VOID」。run/decide 复用 now_iso8601（std SystemTime + Hinnant days-from-civil 逆算法生成 RFC3339 UTC 秒级时间戳，避免为 CLI 新增 time 依赖）。CLI 层不新增任何 Cargo 依赖、不改 core。
+
+Build Verification：`cargo check --workspace` 0 error（快速校验）；本次改动仅动 mojian-cli 源码与集成测试、未改 Cargo.toml/嵌入资产，未触发 devops.md 打包影响范围，仍按 REQ-002 验收口执行打包校验 `cargo build --workspace` 0 error/0 warning。测试：`cargo test -p mojian-cli --test cli` 5 passed（含新 run_decide_run_end_to_end，MOJIAN_HOME 隔离 + MOJIAN_CLAUDE_CMD 假脚本真实 spawn，不触达真实 claude）；`cargo test --workspace` 全绿无回归。手动 E2E 复核 new→run(停 brief)→status(显卡点)→decide REVISE(写 decision.jsonl)→run(评论「钩子太弱」回喂进 generation.jsonl 第 2 行 inputs)→decide CONFIRMED→run(vision_drafting Idle 不再卡 brief)→decide 关卡不匹配(exit 1 + 关卡状态不匹配 无 panic)。
+Builder Exit Criteria：6/6 通过。
+
+已知风险：status 卡点提示当前仅覆盖 SOP① 顺序关卡（project_state.cursors.pending_gate）；章节级 skeleton_review 卡点显示与章节 VOID/REVISE 判定按 tech-design.md「端到端验收深度」走 core 单元/集成测覆盖，未塞进 CLI E2E（需 volume/batch/chapter 行种子）。decide 的 gate 校验以 pending_gate 为准，仅对 SOP① 顺序关卡生效，与本迭代 CLI 面契约一致。now_iso8601 为 std 自算 UTC 秒级时间戳（与 core::now_rfc3339 的 time crate 实现同语义、不同实现），仅用于日志 ts 字段、不参与任何断言。

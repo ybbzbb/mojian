@@ -164,3 +164,26 @@ steps:
 - [x] issue #12 builder-agent TASK-005 comment — done
 
 | builder-agent | TASK-005 | N/A | N/A | 2026-07-08 |
+
+## qa-agent — 2026-07-08 (TASK-005)
+
+steps:
+- [x] dev 环境探测（cargo 1.96.1；devops.md Build Verification 口径；MOJIAN_HOME=mktemp 隔离，无外部服务/关停） — done
+- [x] TASK-005 QA Verification 3/3 真跑（cargo build --workspace EXIT=0 / cargo test -p mojian-core --test engine_loop EXIT=0 3 passed；apply_generation→pending_gate=="brief"+artifact_ref 2 行 / apply_decision(CONFIRMED,brief)→pending_gate 清除+sop_phase=="vision_drafting" / VOID(CH-7)→void_record 新增 1 行+chapter status=="planned"） — done
+- [x] 附加回归 cargo test -p mojian-core engine（5 单测）/ state（10 单测）0 failed — done
+- [x] TASK-005 status reviewing → done — done
+- [x] review.md 追加 TASK-005 通过记录 — done
+
+| qa-agent | TASK-005 | N/A | N/A | 2026-07-08 |
+
+## builder-agent — 2026-07-08 (TASK-006)
+
+steps:
+- [x] TASK-006 实现（run/decide 桩→真逻辑 + status 显卡点 + cli.rs 端到端用例） — done
+- [x] Build Verification（cargo check + cargo build --workspace 0 error/0 warning / cargo test --workspace 全绿） — done
+- [x] TASK-006 status ready → in_progress → reviewing — done
+- [x] log.md 追加 TASK-006 构建记录 — done
+- [x] issue #11 builder-agent TASK-006 comment — done
+- [x] issue #12 builder-agent TASK-006 comment — done
+
+| builder-agent | TASK-006 | N/A | N/A | 2026-07-08 |

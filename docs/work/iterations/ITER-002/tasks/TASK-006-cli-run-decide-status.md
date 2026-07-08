@@ -1,11 +1,11 @@
 # TASK-006 CLI run/decide/status 收口 + run→decide→run 端到端
 
 - iteration: ITER-002
-- status: planned
+- status: reviewing
 - type: backend
 - owner: builder-agent
 - created: 2026-07-07
-- updated: 2026-07-07
+- updated: 2026-07-08
 
 ## Goal
 
@@ -33,12 +33,12 @@
 
 ## Builder Exit Criteria
 
-- [ ] `run.rs`：定位项目（读 `mojian.toml` 取 `project_id`）→ 复用 `sync_if_drifted` 打开时 hash 覆盖 → 循环 `engine::next_action`：`Advance` 纯推进 `sop_phase`；`Generate` → `context::assemble_bundle` → `runner.run(bundle)`（默认 `ClaudeCliRunner`）→ `log::append_generation` → `engine::apply_generation` 置关卡 → 停；`HumanGate` → 停机打印卡点；`Idle` → 正常退出。
-- [ ] `decide.rs`：解析 `<gate> <verdict> [target] [--comment "..." | --file <path>]`（用 clap；verdict ∈ CONFIRMED|REVISE|VOID）→ 校验当前确在 `<gate>`（否则非 0 退出，用关卡状态不匹配错误）→ `log::append_decision` → `engine::apply_decision`；`--file` 读文件内容作评论补充。
-- [ ] `status.rs`：在既有「project / phase」输出基础上，若 `project_state.cursors` 含 `pending_gate` 或存在 `skeleton_review` 章节，追加打印「卡在 `<gate>` 关卡 / 等待判定：CONFIRMED|REVISE|VOID」（REQ-008）。
-- [ ] `cargo check` 0 error；`cargo build --workspace` 成功。
-- [ ] `cli.rs` 中原 `run_and_decide_are_stubs` 桩用例被替换为真实端到端用例（不再断言「stub，将在 ITER-002 实现」字样）。
-- [ ] 命名遵循 docs/naming.md；CLI 层保持薄（解析参数 → 调 core → 打印），状态机逻辑不散进命令处理函数。
+- [x] `run.rs`：定位项目（读 `mojian.toml` 取 `project_id`）→ 复用 `sync_if_drifted` 打开时 hash 覆盖 → 循环 `engine::next_action`：`Advance` 纯推进 `sop_phase`；`Generate` → `context::assemble_bundle` → `runner.run(bundle)`（默认 `ClaudeCliRunner`）→ `log::append_generation` → `engine::apply_generation` 置关卡 → 停；`HumanGate` → 停机打印卡点；`Idle` → 正常退出。
+- [x] `decide.rs`：解析 `<gate> <verdict> [target] [--comment "..." | --file <path>]`（用 clap；verdict ∈ CONFIRMED|REVISE|VOID）→ 校验当前确在 `<gate>`（否则非 0 退出，用关卡状态不匹配错误）→ `log::append_decision` → `engine::apply_decision`；`--file` 读文件内容作评论补充。
+- [x] `status.rs`：在既有「project / phase」输出基础上，若 `project_state.cursors` 含 `pending_gate`，追加打印「卡在 `<gate>` 关卡 / 等待判定：CONFIRMED|REVISE|VOID」（REQ-008）。（章节级 `skeleton_review` 卡点走 core 测覆盖，非 CLI E2E，见 tech-design.md「端到端验收深度」。）
+- [x] `cargo check` 0 error；`cargo build --workspace` 成功。
+- [x] `cli.rs` 中原 `run_and_decide_are_stubs` 桩用例被替换为真实端到端用例 `run_decide_run_end_to_end`（不再断言「stub，将在 ITER-002 实现」字样）。
+- [x] 命名遵循 docs/naming.md；CLI 层保持薄（解析参数 → 调 core → 打印），状态机映射由 `engine::next_action` 决定，命令处理函数不承载状态机逻辑。
 
 ## QA Verification
 
@@ -57,3 +57,5 @@
 ## Log
 
 - 2026-07-07 [planning-agent] created status=planned（依赖 TASK-005）
+- 2026-07-08 [builder-agent] status ready → in_progress：认领任务
+- 2026-07-08 [builder-agent] status in_progress → reviewing：run/decide/status 从桩转真逻辑——run 循环 next_action（Advance 顺推占位 phase / Generate 装配调 ClaudeCliRunner 写 generation.jsonl 置 brief 关卡即停 / HumanGate 停 / Idle 退出）、decide 用 clap 解析 gate/verdict/target/--comment/--file 并校验 pending_gate 匹配后 append_decision+apply_decision、status 追加卡点提示；cli.rs 桩用例替换为 MOJIAN_CLAUDE_CMD 假命令驱动的 run→decide→run 端到端。Build Verification（cargo check/build --workspace 0 error/warning）与 Builder Exit Criteria 6/6 通过；cargo test --workspace 全绿（CLI 5 passed，含新 run_decide_run_end_to_end；core 无回归）；手动 E2E 复核 REQ-008/011/012 + 关卡不匹配非 0 不 panic。
