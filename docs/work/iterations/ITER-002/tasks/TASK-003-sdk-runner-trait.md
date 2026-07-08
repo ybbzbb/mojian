@@ -1,11 +1,11 @@
 # TASK-003 sdk 模块：GenerationRunner trait + Bundle + ClaudeCliRunner
 
 - iteration: ITER-002
-- status: planned
+- status: reviewing
 - type: backend
 - owner: builder-agent
 - created: 2026-07-07
-- updated: 2026-07-07
+- updated: 2026-07-08
 
 ## Goal
 
@@ -31,14 +31,14 @@
 
 ## Builder Exit Criteria
 
-- [ ] `Bundle` 结构体含五字段：`agent`（部署 agent 相对路径）、`spec_slice`、`inputs`（切片后 SSOT 结构化参数，含回喂评论）、`write_scope: Vec<PathBuf>`、`output_contract`（对齐 engine.md bundle 表 + REQ-003）。
-- [ ] `SdkResponse` 结构体：`result: String`、`cost: Option<f64>`（serde rename `total_cost_usd`）、`usage_in: Option<u64>` / `usage_out: Option<u64>`（映射 `usage.input_tokens` / `usage.output_tokens`），字段以 serde rename + Option 容错解析（REQ-005）。
-- [ ] `trait GenerationRunner { fn run(&self, bundle: &Bundle) -> Result<SdkResponse, CoreError>; }`。
-- [ ] `ClaudeCliRunner` 实现 `GenerationRunner`：用 `std::process::Command` 拼 `claude -p <prompt> --output-format json --allowedTools Read,Write,Edit --add-dir <write_scope 逐项>`；基础命令名读 `MOJIAN_CLAUDE_CMD`（`std::env::var`，缺省 `"claude"`）；在项目目录内运行（`current_dir`）；`output()` 抓 stdout/stderr/exit（对齐 REQ-004、engine.md 调用形态）。
-- [ ] 子进程非 0 退出 → 返回子进程失败错误（含 exit 与 stderr 摘要）；stdout JSON 解析失败 → 返回 JSON 解析错误变体（均用 TASK-001 预置变体）。
-- [ ] `lib.rs` 导出 `GenerationRunner` / `ClaudeCliRunner` / `Bundle` / `SdkResponse`；`cargo check` 0 error。
-- [ ] 单元测试（`#[cfg(test)]`）提供 `FakeRunner`（不 spawn 进程）并覆盖：`SdkResponse` 从形如 `{"result":"...","total_cost_usd":0.01,"usage":{"input_tokens":10,"output_tokens":20}}` 的 JSON 正确解析；缺 cost/usage 字段时 Option 为 None 不报错。
-- [ ] 命名遵循 docs/naming.md。
+- [x] `Bundle` 结构体含五字段：`agent`（部署 agent 相对路径）、`spec_slice`、`inputs`（切片后 SSOT 结构化参数，含回喂评论）、`write_scope: Vec<PathBuf>`、`output_contract`（对齐 engine.md bundle 表 + REQ-003）。
+- [x] `SdkResponse` 结构体：`result: String`、`cost: Option<f64>`（serde rename `total_cost_usd`）、`usage_in: Option<u64>` / `usage_out: Option<u64>`（映射 `usage.input_tokens` / `usage.output_tokens`），字段以 serde rename + Option 容错解析（REQ-005）。
+- [x] `trait GenerationRunner { fn run(&self, bundle: &Bundle) -> Result<SdkResponse, CoreError>; }`。
+- [x] `ClaudeCliRunner` 实现 `GenerationRunner`：用 `std::process::Command` 拼 `claude -p <prompt> --output-format json --allowedTools Read,Write,Edit --add-dir <write_scope 逐项>`；基础命令名读 `MOJIAN_CLAUDE_CMD`（`std::env::var`，缺省 `"claude"`）；在项目目录内运行（`current_dir`）；`output()` 抓 stdout/stderr/exit（对齐 REQ-004、engine.md 调用形态）。
+- [x] 子进程非 0 退出 → 返回子进程失败错误（含 exit 与 stderr 摘要）；stdout JSON 解析失败 → 返回 JSON 解析错误变体（均用 TASK-001 预置变体）。
+- [x] `lib.rs` 导出 `GenerationRunner` / `ClaudeCliRunner` / `Bundle` / `SdkResponse`；`cargo check` 0 error。
+- [x] 单元测试（`#[cfg(test)]`）提供 `FakeRunner`（不 spawn 进程）并覆盖：`SdkResponse` 从形如 `{"result":"...","total_cost_usd":0.01,"usage":{"input_tokens":10,"output_tokens":20}}` 的 JSON 正确解析；缺 cost/usage 字段时 Option 为 None 不报错。
+- [x] 命名遵循 docs/naming.md。
 
 ## QA Verification
 
@@ -53,3 +53,5 @@
 ## Log
 
 - 2026-07-07 [planning-agent] created status=planned（依赖 TASK-001）
+- 2026-07-08 [builder-agent] status planned → ready → in_progress：TASK-001 已 done，依赖满足，认领任务
+- 2026-07-08 [builder-agent] status in_progress → reviewing：新增 sdk 模块（mod.rs 五字段 Bundle + nested-usage 容错 SdkResponse + GenerationRunner trait；claude_cli.rs ClaudeCliRunner，std::process::Command + MOJIAN_CLAUDE_CMD 注入），lib.rs 导出 4 项；Build Verification（cargo check -p mojian-core / cargo check --workspace）通过；Builder Exit Criteria 8/8：Bundle/SdkResponse/trait/ClaudeCliRunner 均落地并 cargo check 0 error，子进程非 0 → SubprocessFailed、JSON 失败 → JsonParse(via ?)，lib.rs 导出齐全，单测 FakeRunner 不 spawn + SdkResponse 全字段/缺字段解析各覆盖（cargo test --lib sdk 4 passed），集成测 sdk_runner 假命令真实 spawn 2 passed，命名遵循 naming.md

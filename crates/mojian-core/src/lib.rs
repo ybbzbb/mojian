@@ -4,6 +4,7 @@ pub mod error;
 pub mod log;
 pub mod paths;
 pub mod project;
+pub mod sdk;
 pub mod spec;
 
 pub use db::{open_central_db, SCHEMA_VERSION};
@@ -17,6 +18,7 @@ pub use project::{
     load_project_state, read_manifest, register_project, update_project_spec, write_manifest,
     ProjectManifest,
 };
+pub use sdk::{Bundle, ClaudeCliRunner, GenerationRunner, SdkResponse};
 pub use spec::{
     authoritative_hash, authoritative_version, deploy_spec, embedded_spec, ensure_master,
     sync_if_drifted, tree_hash,

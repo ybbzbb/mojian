@@ -99,3 +99,26 @@ steps:
 - [x] issue #12 builder-agent TASK-002 comment — done
 
 | builder-agent | TASK-002 | N/A | N/A | 2026-07-08 |
+
+## qa-agent — 2026-07-08 (TASK-002)
+
+steps:
+- [x] dev 环境探测（cargo 1.96.1；devops.md Build Verification 口径；MOJIAN_HOME=mktemp 隔离） — done
+- [x] TASK-002 QA Verification 3/3 真跑（cargo build --workspace EXIT=0 / cargo test -p mojian-core --test log_jsonl EXIT=0 3 passed / read_decision_comments 按 gate 过滤断言 ok） — done
+- [x] 附加回归 cargo test -p mojian-core --lib log 5 passed — done
+- [x] TASK-002 status reviewing → done — done
+- [x] review.md 追加 TASK-002 通过记录 — done
+
+| qa-agent | TASK-002 | N/A | N/A | 2026-07-08 |
+
+## builder-agent — 2026-07-08 (TASK-003)
+
+steps:
+- [x] TASK-003 实现（mojian-core::sdk：Bundle 五字段 / SdkResponse nested-usage 容错 Deserialize / GenerationRunner trait / ClaudeCliRunner std::process::Command + MOJIAN_CLAUDE_CMD；lib.rs 导出 4 项） — done
+- [x] Build Verification（cargo check -p mojian-core 0 error / cargo check --workspace 0 error / cargo test --test sdk_runner 2 passed / cargo test --lib sdk 4 passed） — done
+- [x] TASK-003 status ready → in_progress → reviewing — done
+- [x] log.md 追加 TASK-003 构建记录 — done
+- [x] issue #11 builder-agent TASK-003 comment — done
+- [x] issue #12 builder-agent TASK-003 comment — done
+
+| builder-agent | TASK-003 | N/A | N/A | 2026-07-08 |

@@ -1,7 +1,7 @@
 # TASK-002 log 模块：generation/decision JSONL 追加写 + 评论回读
 
 - iteration: ITER-002
-- status: reviewing
+- status: done
 - type: backend
 - owner: builder-agent
 - created: 2026-07-07
@@ -62,3 +62,4 @@
     - 不写 check.jsonl（裁决①排除）；仅新增常量 GENERATION_LOG_FILE / DECISION_LOG_FILE。
     - cargo check 0 error；命名 snake_case 动词开头 / PascalCase 类型，遵循 docs/naming.md。
   - Build Verification：cargo check 通过（快速校验）；未触及打包文件范围（无 Cargo.toml / 依赖变更），无需打包校验。cargo test -p mojian-core --test log_jsonl EXIT=0（3 passed）；log 模块单测 5 passed。
+- 2026-07-08 [qa-agent] status reviewing → done：QA Verification 3/3 通过（cargo build --workspace EXIT=0；cargo test -p mojian-core --test log_jsonl EXIT=0 3 passed；log 模块单测 5 passed）
