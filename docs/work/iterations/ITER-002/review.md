@@ -77,3 +77,39 @@ QA Verification：
 
 运行结论：
   所有 QA Verification 通过 ✓（3/3）；apply_generation 置 brief 关卡 + artifact_ref 落库、apply_decision 三判定（CONFIRMED 推进 vision_drafting / REVISE 回退 brief_drafting / VOID 最小语义 void→planned+void_record）均以真实隔离 DB 回读断言验证；next_action 纯函数分支与检查步位空过（裁决①）由 engine/state 单测覆盖。剩余 TASK-006 仍为 planned，迭代未关闭，phase 保持 building
+
+## TASK-006 — 2026-07-08 — ✅ 通过
+
+dev 环境：Rust workspace（devops.md Build Verification 口径），无外部服务；MOJIAN_HOME 指向 mktemp 隔离目录；MOJIAN_CLAUDE_CMD 指向打印固定 JSON 的假命令（不触达真实 claude、零 token）；`target/debug/mojian` 真实二进制驱动；`cargo build --workspace` EXIT=0
+
+QA Verification（7/7）：
+  [x] 端到端 run→decide→run（裁决②，mock SDK）— 命令：`cargo test -p mojian-cli --test cli`；响应：`test result: ok. 5 passed; 0 failed`，含 `run_decide_run_end_to_end`（原桩用例 `run_and_decide_are_stubs` 已替换，不再断言 stub 字样）
+  [x] 首次 `mojian run --path <proj>` 跑到 brief 关卡即停 — 命令：`mojian run --path <proj>`；退出码 0；stdout `已完成生成步 / 卡在 brief 关卡`；`<MOJIAN_HOME>/logs/<pid>/generation.jsonl` 新增 1 行含 `step:brief_drafting / agent / token_in:11 / token_out:22 / cost:0.0123`
+  [x] `mojian status --path <proj>` 显卡点（REQ-008）— 响应：`project: demo-proj` / `phase: brief_drafting` / `卡在 brief 关卡` / `等待判定：CONFIRMED|REVISE|VOID`
+  [x] `mojian decide brief REVISE --comment "钩子太弱"` — 退出码 0；`decision.jsonl` 新增 `{"gate":"brief","verdict":"REVISE","comment":"钩子太弱",...}`
+  [x] REQ-011 回喂：REVISE 后再次 `mojian run` — 新写入 generation.jsonl 行 `inputs` 含 `{"path":"decision.jsonl","anchor":"钩子太弱",...}`（FEEDBACK_PRESENT=YES）
+  [x] `mojian decide brief CONFIRMED` 后再 `mojian run`（REQ-012）— decide 退出码 0；status 推进到 `phase: vision_drafting`（不再卡 brief）；后续 run 退出码 0 `无待执行动作（当前 phase: vision_drafting）`，run→decide→run 通路成立
+  [x] 错误路径：gate 不匹配的 `mojian decide brief CONFIRMED` — 退出码 1（非 0），stderr `错误：关卡状态不匹配：期望处于关卡 "brief"，实际为 "<无关卡>"`，无 panic（PANIC_DETECTED=NO）
+
+附加回归：
+  [x] `cargo test --workspace` — 全部 test 套件 `0 failed`（mojian_core lib 54 / cli 5 / context_assemble 2 / db 3 / engine_loop 3 / log_jsonl 3 / paths 1 / project 4 / sdk_runner 2 / spec 6），WS_TEST_EXIT=0
+
+运行结论：
+  所有 QA Verification 通过 ✓（7/7）；run/decide/status 三命令用真实二进制 + 隔离 MOJIAN_HOME + 假 SDK 端到端跑通 run→decide→run 闭环，REQ-007/008/009/010/011/012 + 裁决② 全部真跑验证；关卡不匹配非 0 退出不 panic。本任务为本迭代最后一个 task，全部 task 已 done。
+
+---
+
+## QA 验收完成 — 2026-07-08
+
+完成任务：6 个
+取消任务：0 个
+跳过任务：0 个
+总计：6 个
+
+交付摘要（每个 done 任务一行）：
+- TASK-001: workspace 依赖基线 + error 变体 — QA Verification 3/3 ✓
+- TASK-002: log.jsonl writer（generation/decision）— QA Verification 3/3 ✓
+- TASK-003: SDK runner trait + ClaudeCliRunner — QA Verification 3/3 ✓
+- TASK-004: context 切片装配（assemble_bundle）— QA Verification 3/3 ✓
+- TASK-005: engine next_action + state 落库（三判定）— QA Verification 3/3 ✓
+- TASK-006: CLI run/decide/status 收口 + run→decide→run 端到端 — QA Verification 7/7 ✓

@@ -44,6 +44,7 @@ claude -p "用 skeleton-agent 处理 CH-001..003，参数如下：<切片参数>
 - claude 读 `.claude/agents/skeleton-agent.md`（部署的 SPEC）+ Rust 传的参数 + 白名单内 SSOT 文件。
 - Rust 解析 JSON（结果 / 成本 / usage）追加进 `generation.jsonl` 日志文件。
 - 备选（不采用）：Rust 直接打 Anthropic API —— 丢了工具循环，得自己实现 Read/Write。
+- **基础命令可注入（ITER-002 落地）**：`claude` 为默认基础命令，可经 `MOJIAN_CLAUDE_CMD` 环境变量替换为假命令；配合 `GenerationRunner` trait（core 单测用 `FakeRunner` 不起进程），使 QA 能在不触达真实 `claude`、不花 token 前提下端到端验证全链路。
 
 ## bundle：一次 SDK 调用喂进去的东西
 
@@ -59,10 +60,10 @@ claude -p "用 skeleton-agent 处理 CH-001..003，参数如下：<切片参数>
 
 ## 切片装配器 + 输入契约 manifest
 
-每个 SOP 步骤在其 SPEC 里声明**输入契约**（manifest），用**符号引用**而非死路径：
+每个 SOP 步骤在其 SPEC 里声明**输入契约**（manifest），用**符号引用**而非死路径。落地形态为**部署 SPEC 内的 TOML sidecar**（`<agent>.manifest.toml`，与 agent 正文物理分离：Rust 读契约、`claude` 读提示词）；下方 YAML 为等价示意，语义（符号引用 / `write:` → `write_scope`）一致：
 
 ```yaml
-# skeleton agent 的输入契约（写在 agent frontmatter 或 sidecar）
+# skeleton agent 的输入契约（落地为 TOML sidecar；此处 YAML 仅为等价示意）
 inputs:
   - bible.rules                 # 整文件
   - bible.style#skeleton        # style.md 里名为 skeleton 的那一段（段级切片）

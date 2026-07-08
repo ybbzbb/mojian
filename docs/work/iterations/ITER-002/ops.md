@@ -187,3 +187,43 @@ steps:
 - [x] issue #12 builder-agent TASK-006 comment — done
 
 | builder-agent | TASK-006 | N/A | N/A | 2026-07-08 |
+
+## qa-agent — 2026-07-08 (TASK-006)
+
+steps:
+- [x] dev 环境探测（cargo 1.96.x；devops.md Build Verification 口径；MOJIAN_HOME=mktemp 隔离 + MOJIAN_CLAUDE_CMD 假命令，不触达真实 claude） — done
+- [x] TASK-006 QA Verification 7/7 真跑（cargo test -p mojian-cli --test cli 5 passed 含 run_decide_run_end_to_end / 真实 mojian 二进制 new→run 停 brief 关卡+generation.jsonl token·cost / status 显卡点 REQ-008 / decide REVISE 写 decision.jsonl / REQ-011 评论回喂 inputs / CONFIRMED 推进 vision_drafting 通路 REQ-012 / gate 不匹配非 0 退出不 panic） — done
+- [x] 附加回归 cargo test --workspace 全绿 0 failed（core lib 54 / cli 5 / 各集成套件） — done
+- [x] TASK-006 status reviewing → done — done
+- [x] review.md 追加 TASK-006 通过记录 + QA 验收完成关闭摘要 — done
+- [x] current-iteration.md → phase archive_ready（保留 source + Cursors） — done
+- [x] issue #11 qa-agent qa-complete comment — done
+- [x] issue #12 qa-agent qa-complete comment — done
+
+| qa-agent | TASK-006 | N/A | N/A | 2026-07-08 |
+
+## archivist-agent — 2026-07-08
+
+steps:
+- [x] archive-proposal.md (revision 1) — done
+- [x] human-review.md (Round 1 archivist-agent review decision + output) — done
+- [x] current-iteration.md → phase archive_review（保留 source + Cursors） — done
+- [x] issue #11 archivist-agent revision-1 comment — done
+- [x] issue #12 archivist-agent revision-1 comment — done
+
+| archivist-agent | revision 1 | N/A | N/A | 2026-07-08 |
+
+## archivist-agent — 2026-07-08 (final check)
+
+steps:
+- [x] archive-proposal.md (status → confirmed, 5 待确认项勾选) — done
+- [x] apply diff to docs/product.md (3 处) — done
+- [x] apply diff to docs/tech-design/overview.md (1 处) — done
+- [x] apply diff to docs/tech-design/engine.md (2 处) — done
+- [x] update history.md (ITER-002 Status → issue_open, 追加 ### ITER-002 总结) — done
+- [x] human-review.md (Round 1 archivist-agent final-check pass node) — done
+- [x] current-iteration.md → phase issue_open（保留 source + Cursors） — done
+- [x] issue #11 archivist-agent issue_open comment — done
+- [x] issue #12 archivist-agent issue_open comment — done
+
+| archivist-agent | ITER-002 final check | N/A | N/A | 2026-07-08 |

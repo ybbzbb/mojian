@@ -131,3 +131,66 @@ CONFIRMED
 
 tech-design.md status → confirmed
 phase: design_review → planning_ready
+
+---
+
+## Round 1 — 2026-07-08 [archivist-agent review decision]
+
+阶段: archive_review
+变更类型: feature
+影响面: medium
+风险信号:
+- 真实 `claude --output-format json` 字段 schema 本迭代未验证（只跑 mock，裁决②），归档描述需诚实标注「尚未落地」。
+- 占位 SPEC（仅 `brief_drafting` 步 + `brief` 关卡）：归档需明确「机制通路已通、真实 SOP 提示词与多关卡链路未落地」，避免读者误读为完整创作流水线已就绪。
+- main.rs 子命令 help 文案仍写「桩，将在 ITER-002 实现」，现已过时（属应修文案，供人工裁决处理时机）。
+
+建议: human_review（review_policy = human_required，强制人工确认）
+
+---
+
+## Round 1 — 2026-07-08 [archivist-agent output]
+
+归档建议摘要：
+- product.md：3 项修改建议（新增「生成闭环（ITER-002）」小节 / 修正 ITER-001 桩描述 / 收敛「尚未落地」清单）
+- tech-design.md：3 项修改建议（overview.md 技术栈基线加 `serde_json` 行 / engine.md manifest 措辞对齐 TOML sidecar / engine.md 补 `MOJIAN_CLAUDE_CMD` 可注入）
+- 知会（不改文件）：关卡 pending 标记入 `project_state.cursors` JSON，无迁移，storage.md 不动
+- 不归档任务：3 个（TASK-001 / TASK-002 / TASK-005，实现细节，产物已由上述建议覆盖）
+- 应修文案：main.rs 过时 help 文案（供人工裁决本迭代内修 or 另开 issue）
+
+等待操作：在下方 [human feedback] 块填写决定，然后重触发 archivist-agent
+- 决定 = "修订"     → 生成 revision 2
+- 决定 = "CONFIRMED" → 终审检查，通过则应用 diff；source 为 issue#11/#12 且仍 open → phase: issue_open（不关闭 source issue）
+
+（source 为 issue：也可在 issue #11 / #12 评论区回复意见或 "CONFIRMED"，agent 会自动同步）
+
+---
+
+## Round 1 — 2026-07-08 [human feedback] (archive)
+
+### 意见
+
+归档建议全部同意，**授权 archivist-agent 应用全部 diff**：
+- product.md 3 项（新增「生成闭环（ITER-002）」小节 / 修正 ITER-001 桩描述 / 收敛「尚未落地」清单）—— 同意。
+- tech-design 3 项（overview.md 加 serde_json / engine.md manifest 措辞对齐 TOML sidecar / engine.md 补 MOJIAN_CLAUDE_CMD 可注入）—— 同意。
+- cursors 关卡标记知会（不改 storage.md）—— 认可；不归档任务清单合理。
+
+main.rs 过时 help 文案「桩，将在 ITER-002 实现」：**本迭代内修**——属文案/注释调整（CLAUDE.md 免 issue 例外），由 driver 在 Git 收口前顺手更正，不另开 issue。
+
+### 决定
+CONFIRMED
+
+---
+
+## Round 1 — 2026-07-08 [archivist-agent output] (final check)
+
+终审通过：归档建议完备、diff 可执行、与项目级技术设计基线不冲突（TOML sidecar 与 engine.md「frontmatter 或 sidecar」原文一致）。6 个 done 任务均已归口（TASK-003/004/006 → tech-design 修改建议；TASK-001 serde_json → overview 技术栈基线，error 变体为内部实现细节不归档；TASK-002/005 为既定设计的实现级落地不归档）。
+
+已应用 diff：
+- docs/product.md（3 处）：新增「生成闭环（ITER-002）」小节 / 修正 ITER-001 桩描述 / 收敛「尚未落地」清单。
+- docs/tech-design/overview.md（1 处）：技术栈基线表增 `serde_json` 行 + 标题「ITER-001 落地，ITER-002 增补」。
+- docs/tech-design/engine.md（2 处）：manifest 措辞对齐 TOML sidecar（YAML 为等价示意）/ SDK 节补基础命令可经 `MOJIAN_CLAUDE_CMD` 注入替换。
+
+已更新 docs/work/history.md：ITER-002 行 Status → issue_open，追加 ### ITER-002 总结（摘要 / 改动 / 任务）。
+
+source 为 issue#11 + #12 且两者仍 OPEN → 不关闭 source issue。
+phase: archive_review → issue_open（等待人工关闭 source issue，由 driver 检测后推进到 done）

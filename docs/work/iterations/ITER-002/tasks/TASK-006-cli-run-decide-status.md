@@ -1,7 +1,7 @@
 # TASK-006 CLI run/decide/status 收口 + run→decide→run 端到端
 
 - iteration: ITER-002
-- status: reviewing
+- status: done
 - type: backend
 - owner: builder-agent
 - created: 2026-07-07
@@ -58,4 +58,5 @@
 
 - 2026-07-07 [planning-agent] created status=planned（依赖 TASK-005）
 - 2026-07-08 [builder-agent] status ready → in_progress：认领任务
+- 2026-07-08 [qa-agent] status reviewing → done：QA Verification 7/7 通过（真实 mojian 二进制 + MOJIAN_HOME 隔离 + MOJIAN_CLAUDE_CMD 假命令端到端 run→decide→run；cargo test -p mojian-cli --test cli 5 passed 含 run_decide_run_end_to_end；cargo test --workspace 全绿 0 failed）
 - 2026-07-08 [builder-agent] status in_progress → reviewing：run/decide/status 从桩转真逻辑——run 循环 next_action（Advance 顺推占位 phase / Generate 装配调 ClaudeCliRunner 写 generation.jsonl 置 brief 关卡即停 / HumanGate 停 / Idle 退出）、decide 用 clap 解析 gate/verdict/target/--comment/--file 并校验 pending_gate 匹配后 append_decision+apply_decision、status 追加卡点提示；cli.rs 桩用例替换为 MOJIAN_CLAUDE_CMD 假命令驱动的 run→decide→run 端到端。Build Verification（cargo check/build --workspace 0 error/warning）与 Builder Exit Criteria 6/6 通过；cargo test --workspace 全绿（CLI 5 passed，含新 run_decide_run_end_to_end；core 无回归）；手动 E2E 复核 REQ-008/011/012 + 关卡不匹配非 0 不 panic。
