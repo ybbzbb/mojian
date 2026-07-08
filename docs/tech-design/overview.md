@@ -72,7 +72,7 @@ mojian 客户端（程序 = 唯一的机器状态源，装一次，全局）
 - **DB schema 升级**：只在客户端中央库跑一次迁移。
 - **默认配置升级**：默认值随程序；项目只存覆盖项，没覆盖的自动吃新默认。
 
-## 技术栈基线（ITER-001 落地）
+## 技术栈基线（ITER-001 落地，ITER-002 增补）
 
 执行器为 Rust Cargo workspace：`crates/mojian-core`（库）+ `crates/mojian-cli`（产出二进制 `mojian`）。奠基选型（后续迭代继承，锁定成本高，均取生态主流）：
 
@@ -86,5 +86,6 @@ mojian 客户端（程序 = 唯一的机器状态源，装一次，全局）
 | 内容 hash | `blake3`（tree hash） | 仅内部部署缓存比对，取更快更简，无 SHA 标准化诉求 |
 | 嵌入 SPEC 骨架 | `include_dir` | 占位主副本编译进二进制，首次运行落地到 `<data_dir>/spec/` |
 | 其余 | `uuid` / `time` / `anyhow` / `thiserror` | project_id / 时间戳 / 应用层与库错误 |
+| JSON 解析 / JSONL 序列化（ITER-002） | `serde_json` | 解析 `claude --output-format json` 的 stdout；generation/decision 事件逐行序列化写 JSONL；serde 生态标准件，与既有 `serde` 协作 |
 
 全部版本集中在 workspace 根 `[workspace.dependencies]` 统一管理。本迭代零 token 花费面：不引入 async 运行时（tokio）/ ORM / HTTP 网络栈 / LLM SDK。

@@ -1,11 +1,11 @@
 # Current Iteration
 
-id: ITER-001
+id: ITER-002
 phase: issue_open
-source: https://github.com/ybbzbb/mojian/issues/9,https://github.com/ybbzbb/mojian/issues/10
+source: https://github.com/ybbzbb/mojian/issues/11,https://github.com/ybbzbb/mojian/issues/12
 
 ## Cursors
 
-product_md_hash: dfc055c7de7b282d6fb050f17c476494f313e029
-issue_last_comment_at: 2026-07-07T07:43:43Z
+product_md_hash: 59378c250d4cb35c14073758b1c32a4a53ea765b
+issue_last_comment_at: 2026-07-07T10:13:14Z
 gap_revision: 1

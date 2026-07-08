@@ -11,7 +11,7 @@ use clap::Args;
 use mojian_core::paths::{central_db_path, data_dir, spec_master_dir};
 use mojian_core::{
     authoritative_hash, authoritative_version, ensure_master, load_project_state, open_central_db,
-    read_manifest, sync_if_drifted, update_project_spec,
+    read_manifest, read_pending_gate, sync_if_drifted, update_project_spec,
 };
 
 use crate::spec_assets::SPEC_ASSETS;
@@ -69,5 +69,13 @@ pub fn run(args: StatusArgs) -> Result<()> {
         .unwrap_or("mojian-project");
     println!("project: {name}");
     println!("phase: {}", phase.as_db_str());
+
+    // 4. 卡点提示（REQ-008）：若卡在人工关卡，追加显示关卡名与待判定选项。
+    let pending_gate = read_pending_gate(&conn, &project_id)
+        .with_context(|| format!("读取当前关卡失败（project_id={project_id}）"))?;
+    if let Some(gate) = pending_gate {
+        println!("卡在 {gate} 关卡");
+        println!("等待判定：CONFIRMED|REVISE|VOID");
+    }
     Ok(())
 }

@@ -1,0 +1,115 @@
+# Review — ITER-002
+
+## TASK-001 — 2026-07-08 — ✅ 通过
+
+dev 环境：Rust workspace（devops.md Build Verification 口径），无外部服务；`cargo build --workspace` EXIT=0
+
+QA Verification：
+  [x] `cargo build --workspace` 退出码 0 — 命令：`cargo build --workspace`；响应：`Finished dev profile ... target(s)`，EXIT=0
+  [x] serde_json 进依赖图 — 命令：`cargo tree -p mojian-core | grep serde_json`；响应：`├── serde_json v1.0.150`
+  [x] 未引入被禁依赖 — 命令：`cargo tree -p mojian-core | grep -E 'serde_yaml|tokio|reqwest'`；响应：无输出（grep exit 1）
+
+附加验证（Builder Exit 回归口）：
+  [x] `cargo test -p mojian-core --lib` — `test result: ok. 9 passed; 0 failed`
+
+运行结论：
+  所有 QA Verification 通过 ✓（3/3），守住 overview.md「零 token 花费面」——唯一新增依赖 serde_json，无 serde_yaml/tokio/reqwest
+
+## TASK-002 — 2026-07-08 — ✅ 通过
+
+dev 环境：Rust workspace（devops.md Build Verification 口径），无外部服务；MOJIAN_HOME 指向 mktemp 隔离目录；`cargo build --workspace` EXIT=0
+
+QA Verification：
+  [x] `cargo test -p mojian-core --test log_jsonl` 退出码 0（集成测试真实写盘到隔离 data_dir） — 命令：`MOJIAN_HOME=<临时目录> cargo test -p mojian-core --test log_jsonl`；响应：`test result: ok. 3 passed; 0 failed`，INT_EXIT=0
+  [x] 连续两次 append_generation → generation.jsonl 实为两行、每行可 serde_json 反序列化、第一行未被第二次写入改动 — test `append_generation_is_append_only_two_lines`；响应：断言 `path.exists()` / `lines.len()==2` / `content.starts_with(first_line)` / 两行反序列化字段还原（step brief_drafting/vision_drafting，hash-1/hash-2）均 ok
+  [x] 两条不同 gate 的 DecisionEvent → `read_decision_comments(project_id, "brief", None)` 只返回 gate=="brief" 评论 — test `read_decision_comments_filters_by_gate`；响应：`assert_eq!(comments, vec!["收紧题材定位"])` ok（gate=="vision" 的「更换金手指」被过滤）
+
+附加验证（Builder Exit 回归口）：
+  [x] `cargo build --workspace` — `Finished dev profile`，BUILD_EXIT=0
+  [x] log 模块单测 `cargo test -p mojian-core --lib log` — `test result: ok. 5 passed; 0 failed`（pick_comment gate/target/空 comment 边界 + generation 单行 JSON + decision 往返省略空 Option）
+
+运行结论：
+  所有 QA Verification 通过 ✓（3/3）；JSONL 只增不改、每行合法 JSON、read_decision_comments 按 gate/target 往返均以真实磁盘断言验证
+
+## TASK-003 — 2026-07-08 — ✅ 通过
+
+dev 环境：Rust workspace（devops.md Build Verification 口径），无外部服务；MOJIAN_HOME 指向 mktemp 隔离目录；`cargo build --workspace` EXIT=0
+
+QA Verification：
+  [x] `cargo test -p mojian-core --test sdk_runner` 退出码 0（集成测试用 MOJIAN_CLAUDE_CMD 指向测试内生成的假命令脚本，ClaudeCliRunner 真实 spawn 该子进程验证「外部命令可替换」硬约束，不触达真实 claude） — 命令：`cargo test -p mojian-core --test sdk_runner`；响应：`test result: ok. 2 passed; 0 failed`，SDK_RUNNER_EXIT=0（tests/sdk_runner.rs 用 write_fake_command 写 0o755 sh 脚本，ClaudeCliRunner::new(temp_dir).run 真实 spawn）
+  [x] 假命令输出固定 JSON 时，run 返回的 SdkResponse.result 等于假命令产出文本，且 cost/usage_in/usage_out 被正确解析 — test `spawns_injected_command_and_parses_fixed_json`；响应：假脚本输出 `{"result":"占位创作物 brief","total_cost_usd":0.0123,"usage":{"input_tokens":128,"output_tokens":256}}`，断言 `result=="占位创作物 brief"` / `cost==Some(0.0123)` / `usage_in==Some(128)` / `usage_out==Some(256)` 全 ok
+  [x] 假命令以非 0 退出码结束时，run 返回 Err（SubprocessFailed 变体）不 panic — test `non_zero_exit_returns_subprocess_failed_without_panic`；响应：假脚本 `exit 3` + stderr `boom`，`unwrap_err` 匹配 `CoreError::SubprocessFailed { code: Some(3), stderr.contains("boom") }` ok
+
+附加验证（FakeRunner trait 注入 + SdkResponse 容错回归口）：
+  [x] `cargo test -p mojian-core --lib sdk` — `test result: ok. 4 passed; 0 failed`：`fake_runner_returns_injected_response_without_spawn`（FakeRunner 实现 GenerationRunner，不 spawn 进程）、`sdk_response_parses_full_json`、`sdk_response_tolerates_missing_cost_and_usage`（缺 total_cost_usd/usage → Option None 不报错）、`sdk_response_tolerates_partial_usage`
+  [x] `cargo build --workspace` — `Finished dev profile`，BUILD_WORKSPACE_EXIT=0
+
+运行结论：
+  所有 QA Verification 通过 ✓（3/3）；ClaudeCliRunner 经 MOJIAN_CLAUDE_CMD 真实 spawn 假命令验证外部命令可替换 + JSON 解析路径，非 0 退出返回 SubprocessFailed 不 panic；FakeRunner trait 注入与 SdkResponse total_cost_usd/usage 容错解析经 lib 单测覆盖
+
+## TASK-004 — 2026-07-08 — ✅ 通过
+
+dev 环境：Rust workspace（devops.md Build Verification 口径），无外部服务；MOJIAN_HOME 指向 mktemp 隔离目录；`cargo build --workspace` EXIT=0
+
+QA Verification：
+  [x] `cargo test -p mojian-core --test context_assemble` 退出码 0 — 命令：`cargo test -p mojian-core --test context_assemble`；响应：`test result: ok. 2 passed; 0 failed`，IT_EXIT=0（集成测试在隔离 MOJIAN_HOME + 唯一临时项目目录中 ensure_master→deploy_spec 部署占位 SPEC、open_central_db+register_project 种子最小 DB 行，真实调用 assemble_bundle 解析磁盘上的 `.claude/agents/brief-agent.manifest.toml`）
+  [x] 断言 Bundle.agent 指向 brief-agent、write_scope 由 manifest write: 推导（非空、与白名单一致）、inputs 含被切片文件 content_hash — test `assemble_bundle_end_to_end_with_comment_feedback`；真实断言：`bundle.agent == ".claude/agents/brief-agent.md"`、`bundle.write_scope == vec!["creative/creative-brief.md"]` 且非空、`bundle.inputs.contains(slice_ref(CLAUDE.md 整文件).content_hash)` 与 `bundle.inputs.contains(slice_ref(brief-agent.md #inputs 段级).content_hash)` 均 ok；段级切片只取 `## inputs` 段不越界到 `## output`
+  [x] decision.jsonl 写入 gate=="brief" 带 comment 记录后，assemble_bundle 的 Bundle.inputs 含该评论文本（REQ-011 回喂通路）— 同 test：append_decision 写入 `gate:brief / verdict:REVISE / comment:"把题材收紧到都市悬疑，弱化群像"`，断言 `bundle.inputs.contains(comment)` ok；反向 test `assemble_bundle_without_comments_has_no_feedback_block` 断言无 decision 时 inputs 仍含 `## input:` 切片但不含 `human comments` 回喂块
+
+附加验证（context 单元测试回归口）：
+  [x] `cargo test -p mojian-core context` — 25 passed; 0 failed（lib 单测：符号文法四类切分含 #anchor/:{params}/纯整文件、占位代入、段级 #anchor 抽取边界、整文件切片 hash 稳定），CTX_EXIT=0
+
+运行结论：
+  所有 QA Verification 通过 ✓（3/3）；assemble_bundle 端到端在隔离环境真跑，五字段 Bundle 装配 + write_scope 推导 + 段级/整文件 blake3 content_hash + decision.jsonl 人类评论回喂（REQ-011）均以真实磁盘断言验证；剩余 TASK-005/006 仍为 planned，迭代未关闭，phase 保持 building
+
+## TASK-005 — 2026-07-08 — ✅ 通过
+
+dev 环境：Rust workspace（devops.md Build Verification 口径），无外部服务；MOJIAN_HOME 指向 mktemp 隔离目录；`cargo build --workspace` EXIT=0
+
+QA Verification：
+  [x] `MOJIAN_HOME=<临时目录> cargo test -p mojian-core --test engine_loop` 退出码 0 — 命令：`cargo test -p mojian-core --test engine_loop`；响应：`test result: ok. 3 passed; 0 failed`，ENGINE_LOOP_EXIT=0（集成测试在隔离临时 DB open_central_db+register_project 登记项目、种子 volume/chapter 行，真实调用 apply_generation/apply_decision 并回读 DB 断言）
+  [x] apply_generation 后 cursors 含 pending_gate=="brief"；apply_decision(CONFIRMED, brief) 后 pending_gate 清除且 sop_phase=="vision_drafting" — test `generation_sets_brief_gate_then_confirm_advances`；响应：回读 `project_state.cursors` 反序列化断言 `value["pending_gate"]=="brief"` 且 artifact_ref(kind='input') COUNT==2；CONFIRMED 后断言 `pending_gate.is_none()` 且 `sop_phase=="vision_drafting"` 全 ok
+  [x] 种子 status=="void" chapter，apply_decision(VOID, CH-7) 后 void_record 新增一行且 chapter status=="planned"（裁决③ 最小语义） — test `void_chapter_records_and_resets_to_planned`；响应：种子 CH-7 status='void'，apply_decision(VOID, Some("CH-7")) 后断言 `void_record WHERE chapter_id='CH-7' COUNT==1` 且 `chapter status=="planned"`（不级联）ok
+
+附加验证（Builder Exit 回归口）：
+  [x] `cargo test -p mojian-core engine` — engine_loop 3 passed + 模块单测 5 passed；0 failed（next_action 每条 phase→action 映射：style_phases→Advance / brief_drafting→Generate / pending_gate 优先 HumanGate / unwired→Idle；Verdict 往返；检查步位空过守裁决①）
+  [x] `cargo test -p mojian-core state` — 10 passed; 0 failed（advance_sop_phase/set_gate/clear_gate cursors JSON 保留其他游标键 / load_chapter / update_chapter_status / insert_void_record / upsert_artifact_ref 走 rusqlite）
+
+运行结论：
+  所有 QA Verification 通过 ✓（3/3）；apply_generation 置 brief 关卡 + artifact_ref 落库、apply_decision 三判定（CONFIRMED 推进 vision_drafting / REVISE 回退 brief_drafting / VOID 最小语义 void→planned+void_record）均以真实隔离 DB 回读断言验证；next_action 纯函数分支与检查步位空过（裁决①）由 engine/state 单测覆盖。剩余 TASK-006 仍为 planned，迭代未关闭，phase 保持 building
+
+## TASK-006 — 2026-07-08 — ✅ 通过
+
+dev 环境：Rust workspace（devops.md Build Verification 口径），无外部服务；MOJIAN_HOME 指向 mktemp 隔离目录；MOJIAN_CLAUDE_CMD 指向打印固定 JSON 的假命令（不触达真实 claude、零 token）；`target/debug/mojian` 真实二进制驱动；`cargo build --workspace` EXIT=0
+
+QA Verification（7/7）：
+  [x] 端到端 run→decide→run（裁决②，mock SDK）— 命令：`cargo test -p mojian-cli --test cli`；响应：`test result: ok. 5 passed; 0 failed`，含 `run_decide_run_end_to_end`（原桩用例 `run_and_decide_are_stubs` 已替换，不再断言 stub 字样）
+  [x] 首次 `mojian run --path <proj>` 跑到 brief 关卡即停 — 命令：`mojian run --path <proj>`；退出码 0；stdout `已完成生成步 / 卡在 brief 关卡`；`<MOJIAN_HOME>/logs/<pid>/generation.jsonl` 新增 1 行含 `step:brief_drafting / agent / token_in:11 / token_out:22 / cost:0.0123`
+  [x] `mojian status --path <proj>` 显卡点（REQ-008）— 响应：`project: demo-proj` / `phase: brief_drafting` / `卡在 brief 关卡` / `等待判定：CONFIRMED|REVISE|VOID`
+  [x] `mojian decide brief REVISE --comment "钩子太弱"` — 退出码 0；`decision.jsonl` 新增 `{"gate":"brief","verdict":"REVISE","comment":"钩子太弱",...}`
+  [x] REQ-011 回喂：REVISE 后再次 `mojian run` — 新写入 generation.jsonl 行 `inputs` 含 `{"path":"decision.jsonl","anchor":"钩子太弱",...}`（FEEDBACK_PRESENT=YES）
+  [x] `mojian decide brief CONFIRMED` 后再 `mojian run`（REQ-012）— decide 退出码 0；status 推进到 `phase: vision_drafting`（不再卡 brief）；后续 run 退出码 0 `无待执行动作（当前 phase: vision_drafting）`，run→decide→run 通路成立
+  [x] 错误路径：gate 不匹配的 `mojian decide brief CONFIRMED` — 退出码 1（非 0），stderr `错误：关卡状态不匹配：期望处于关卡 "brief"，实际为 "<无关卡>"`，无 panic（PANIC_DETECTED=NO）
+
+附加回归：
+  [x] `cargo test --workspace` — 全部 test 套件 `0 failed`（mojian_core lib 54 / cli 5 / context_assemble 2 / db 3 / engine_loop 3 / log_jsonl 3 / paths 1 / project 4 / sdk_runner 2 / spec 6），WS_TEST_EXIT=0
+
+运行结论：
+  所有 QA Verification 通过 ✓（7/7）；run/decide/status 三命令用真实二进制 + 隔离 MOJIAN_HOME + 假 SDK 端到端跑通 run→decide→run 闭环，REQ-007/008/009/010/011/012 + 裁决② 全部真跑验证；关卡不匹配非 0 退出不 panic。本任务为本迭代最后一个 task，全部 task 已 done。
+
+---
+
+## QA 验收完成 — 2026-07-08
+
+完成任务：6 个
+取消任务：0 个
+跳过任务：0 个
+总计：6 个
+
+交付摘要（每个 done 任务一行）：
+- TASK-001: workspace 依赖基线 + error 变体 — QA Verification 3/3 ✓
+- TASK-002: log.jsonl writer（generation/decision）— QA Verification 3/3 ✓
+- TASK-003: SDK runner trait + ClaudeCliRunner — QA Verification 3/3 ✓
+- TASK-004: context 切片装配（assemble_bundle）— QA Verification 3/3 ✓
+- TASK-005: engine next_action + state 落库（三判定）— QA Verification 3/3 ✓
+- TASK-006: CLI run/decide/status 收口 + run→decide→run 端到端 — QA Verification 7/7 ✓

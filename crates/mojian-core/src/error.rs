@@ -17,4 +17,26 @@ pub enum CoreError {
 
     #[error("中央 DB 操作失败：{0}")]
     Db(#[from] rusqlite::Error),
+
+    #[error("生成子进程执行失败（命令 {command:?}，退出码 {code:?}）：{stderr}")]
+    SubprocessFailed {
+        command: String,
+        code: Option<i32>,
+        stderr: String,
+    },
+
+    #[error("JSON 解析失败：{0}")]
+    JsonParse(#[from] serde_json::Error),
+
+    #[error("输入契约 manifest 非法（路径 {path:?}）：{reason}")]
+    ManifestInvalid { path: PathBuf, reason: String },
+
+    #[error("符号引用无法解析（符号 {symbol:?}）：{reason}")]
+    SymbolUnresolved { symbol: String, reason: String },
+
+    #[error("关卡状态不匹配：期望处于关卡 {expected:?}，实际为 {actual:?}")]
+    GateStateMismatch { expected: String, actual: String },
+
+    #[error("判定 {verdict} 缺少目标（章节 / 批次 id）")]
+    MissingDecisionTarget { verdict: String },
 }

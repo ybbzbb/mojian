@@ -1,7 +1,7 @@
 //! `mojian` 二进制入口：clap v4 derive 解析命令面并分发到各子命令。
 //!
 //! 命令契约见迭代 tech-design.md「API 变更」：`new` 建项目、`status` 读 SOP phase，
-//! `run` / `decide` 为 ITER-002 桩。子命令实现返回 `anyhow::Result`，顶层据此决定退出码。
+//! `run` 推进生成循环至人工关卡、`decide` 在关卡提交决定。子命令实现返回 `anyhow::Result`，顶层据此决定退出码。
 
 mod commands;
 mod spec_assets;
@@ -23,9 +23,9 @@ enum Command {
     New(commands::new::NewArgs),
     /// 查看项目当前 SOP phase（打开时按 hash 同步 SPEC）
     Status(commands::status::StatusArgs),
-    /// 运行创作循环（桩，将在 ITER-002 实现）
+    /// 推进生成循环：装配上下文 → 调 SDK 生成 → 撞人工关卡即停
     Run(commands::run::RunArgs),
-    /// 提交人工决策（桩，将在 ITER-002 实现）
+    /// 在人工关卡提交决定：CONFIRMED / REVISE / VOID（可带评论）
     Decide(commands::decide::DecideArgs),
 }
 
