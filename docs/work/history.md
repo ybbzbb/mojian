@@ -3,6 +3,7 @@
 | Iteration | Opened | Closed | Status | Summary |
 |-----------|--------|--------|--------|---------|
 | ITER-001 | 2026-07-07 | - | issue_open | 运行环境就位（issue#9+#10）：Cargo workspace + 领域状态机 + 中央 DB schema + `new`/`status` + SPEC 部署/hash 覆盖 |
+| ITER-002 | 2026-07-07 | - | review_done | 生成闭环（issue#11+#12）：切片装配 + 输入契约 manifest + 无头 claude SDK 调用 + generation.jsonl + run/decide 决定循环 + decision.jsonl 回喂 |
 
 ### ITER-001
 
