@@ -1,11 +1,11 @@
 # TASK-004 context 模块：manifest + 符号解析 + 切片 + assemble_bundle + 占位 SPEC 步
 
 - iteration: ITER-002
-- status: planned
+- status: reviewing
 - type: backend
 - owner: builder-agent
 - created: 2026-07-07
-- updated: 2026-07-07
+- updated: 2026-07-08
 
 ## Goal
 
@@ -39,14 +39,14 @@
 
 ## Builder Exit Criteria
 
-- [ ] `manifest.rs`：TOML sidecar 模型（`agent` / `inputs`（符号引用数组）/ `write`（白名单）/ `output_contract`），用既有 `toml` + `serde` 反序列化；非法 manifest 返回 manifest 非法错误变体。
-- [ ] `symbol.rs`：手写解析器切分 `<source>.<selector>[:{params}][#anchor]`（如 `bible.style#skeleton`、`plan.chapters:{batch}`、`prev_skeleton:{ch-1}`），并按传入的当前状态代入 `{arc_id}` / `{batch}` / `{ch-1}` 等占位；无法解析的符号返回符号无法解析错误变体。
-- [ ] `slice.rs`：两种粒度——整文件切片（读整文件）与段级切片（依 `#anchor` 稳定小标题锚点抽取命名段落）；两者均计算内容 blake3 hash（复用既有 `blake3` 依赖）；被引用文件缺失返回明确 `CoreError`。
-- [ ] `assemble.rs`：`assemble_bundle(conn, project_id, project_dir, manifest_path)` 串起「读 manifest → 解析符号 → 切片 → 调 `log::read_decision_comments` 回喂人类评论进 `inputs` → 由 `write:` 推导 `write_scope` → 组五字段 `Bundle`」（REQ-003/011）。
-- [ ] `brief-agent.manifest.toml`：最小但真实的输入契约，`inputs` 至少含**整文件切片一项 + `#anchor` 段级切片一项**、`write` 白名单至少一项；其 `inputs` 引用的文件在 `mojian new` 部署后于项目内**必然存在**（指向部署产物，使 assemble 无需手工种子即可解析）；`brief-agent.md` 为占位提示词。
-- [ ] `lib.rs` 导出 `assemble_bundle` 及必要公共类型；`cargo check` 0 error。
-- [ ] 单元测试（`#[cfg(test)]`）覆盖：符号文法四类切分（含 `#anchor`、`:{params}`、纯整文件）、占位代入、段级 `#anchor` 抽取正确边界（锚点命中/未命中）、整文件切片 hash 稳定。
-- [ ] 命名遵循 docs/naming.md（`assemble_bundle` 等函数 snake_case 动词开头）。
+- [x] `manifest.rs`：TOML sidecar 模型（`agent` / `inputs`（符号引用数组）/ `write`（白名单）/ `output_contract`），用既有 `toml` + `serde` 反序列化；非法 manifest 返回 manifest 非法错误变体。
+- [x] `symbol.rs`：手写解析器切分 `<source>.<selector>[:{params}][#anchor]`（如 `bible.style#skeleton`、`plan.chapters:{batch}`、`prev_skeleton:{ch-1}`），并按传入的当前状态代入 `{arc_id}` / `{batch}` / `{ch-1}` 等占位；无法解析的符号返回符号无法解析错误变体。
+- [x] `slice.rs`：两种粒度——整文件切片（读整文件）与段级切片（依 `#anchor` 稳定小标题锚点抽取命名段落）；两者均计算内容 blake3 hash（复用既有 `blake3` 依赖）；被引用文件缺失返回明确 `CoreError`。
+- [x] `assemble.rs`：`assemble_bundle(conn, project_id, project_dir, manifest_path)` 串起「读 manifest → 解析符号 → 切片 → 调 `log::read_decision_comments` 回喂人类评论进 `inputs` → 由 `write:` 推导 `write_scope` → 组五字段 `Bundle`」（REQ-003/011）。
+- [x] `brief-agent.manifest.toml`：最小但真实的输入契约，`inputs` 至少含**整文件切片一项 + `#anchor` 段级切片一项**、`write` 白名单至少一项；其 `inputs` 引用的文件在 `mojian new` 部署后于项目内**必然存在**（指向部署产物，使 assemble 无需手工种子即可解析）；`brief-agent.md` 为占位提示词。
+- [x] `lib.rs` 导出 `assemble_bundle` 及必要公共类型；`cargo check` 0 error。
+- [x] 单元测试（`#[cfg(test)]`）覆盖：符号文法四类切分（含 `#anchor`、`:{params}`、纯整文件）、占位代入、段级 `#anchor` 抽取正确边界（锚点命中/未命中）、整文件切片 hash 稳定。
+- [x] 命名遵循 docs/naming.md（`assemble_bundle` 等函数 snake_case 动词开头）。
 
 ## QA Verification
 
@@ -61,3 +61,5 @@
 ## Log
 
 - 2026-07-07 [planning-agent] created status=planned（依赖 TASK-002 log、TASK-003 sdk）
+- 2026-07-08 [builder-agent] status planned → ready → in_progress：前置 TASK-002/003 均 done，认领任务
+- 2026-07-08 [builder-agent] status in_progress → reviewing：实现 context 四模块（manifest TOML sidecar / 符号解析 + 占位代入 / 段级·整文件切片 + blake3 hash / assemble_bundle 全链）+ 占位 brief-agent 步骤资产 + lib.rs 导出；Build Verification（cargo check/build --workspace 0 error、cargo test 全绿）与 Builder Exit Criteria 8/8 全部通过。符号占位代入曾因 parse 剥括号导致未替换，已修复（代入前重新包回 `{...}`）。

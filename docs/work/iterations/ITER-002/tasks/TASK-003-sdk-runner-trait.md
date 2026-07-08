@@ -1,7 +1,7 @@
 # TASK-003 sdk 模块：GenerationRunner trait + Bundle + ClaudeCliRunner
 
 - iteration: ITER-002
-- status: reviewing
+- status: done
 - type: backend
 - owner: builder-agent
 - created: 2026-07-07
@@ -55,3 +55,4 @@
 - 2026-07-07 [planning-agent] created status=planned（依赖 TASK-001）
 - 2026-07-08 [builder-agent] status planned → ready → in_progress：TASK-001 已 done，依赖满足，认领任务
 - 2026-07-08 [builder-agent] status in_progress → reviewing：新增 sdk 模块（mod.rs 五字段 Bundle + nested-usage 容错 SdkResponse + GenerationRunner trait；claude_cli.rs ClaudeCliRunner，std::process::Command + MOJIAN_CLAUDE_CMD 注入），lib.rs 导出 4 项；Build Verification（cargo check -p mojian-core / cargo check --workspace）通过；Builder Exit Criteria 8/8：Bundle/SdkResponse/trait/ClaudeCliRunner 均落地并 cargo check 0 error，子进程非 0 → SubprocessFailed、JSON 失败 → JsonParse(via ?)，lib.rs 导出齐全，单测 FakeRunner 不 spawn + SdkResponse 全字段/缺字段解析各覆盖（cargo test --lib sdk 4 passed），集成测 sdk_runner 假命令真实 spawn 2 passed，命名遵循 naming.md
+- 2026-07-08 [qa-agent] status reviewing → done：QA Verification 3/3 通过（cargo build --workspace EXIT=0；cargo test -p mojian-core --test sdk_runner EXIT=0 2 passed——MOJIAN_CLAUDE_CMD 指向测试内假脚本真实 spawn，断言 result/cost/usage_in/usage_out 解析 + 非 0 退出返回 SubprocessFailed 不 panic；附加 cargo test --lib sdk 4 passed 覆盖 FakeRunner 注入 + SdkResponse total_cost_usd/usage 容错）

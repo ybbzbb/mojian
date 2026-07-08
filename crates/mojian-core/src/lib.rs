@@ -1,3 +1,4 @@
+pub mod context;
 pub mod db;
 pub mod domain;
 pub mod error;
@@ -7,6 +8,7 @@ pub mod project;
 pub mod sdk;
 pub mod spec;
 
+pub use context::assemble_bundle;
 pub use db::{open_central_db, SCHEMA_VERSION};
 pub use domain::{ChapterState, ExtractStatus, SopPhase};
 pub use error::CoreError;

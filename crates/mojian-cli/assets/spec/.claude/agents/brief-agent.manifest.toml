@@ -1,0 +1,19 @@
+# brief-agent 输入契约（占位步骤 · TOML sidecar）
+#
+# inputs 用符号引用（<source>.<selector>[:{params}][#anchor]），装配器按当前状态解析成
+# 项目相对路径 + 段级/整文件切片。所引用文件在 `mojian new` 部署后于项目内必然存在
+# （workspace → CLAUDE.md；spec.brief-agent → .claude/agents/brief-agent.md），无需手工种子。
+
+agent = ".claude/agents/brief-agent.md"
+gate = "brief"
+
+inputs = [
+  "workspace",               # 整文件切片：部署的 CLAUDE.md 工作区说明
+  "spec.brief-agent#inputs", # 段级切片：本 agent 提示词中名为 `inputs` 的小标题段
+]
+
+write = [
+  "creative/creative-brief.md",
+]
+
+output_contract = "creative/creative-brief.md 写入创作意图 brief；done 信号回传字数统计"
