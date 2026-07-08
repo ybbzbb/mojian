@@ -1,7 +1,7 @@
 # TASK-001 workspace 依赖 serde_json + error 变体扩展
 
 - iteration: ITER-002
-- status: reviewing
+- status: done
 - type: backend
 - owner: builder-agent
 - created: 2026-07-07
@@ -37,9 +37,9 @@
 
 ## QA Verification
 
-- [ ] `cargo build --workspace` 退出码 0（真实构建产物，devops.md Build Verification 口径）。
-- [ ] `cargo tree -p mojian-core | grep serde_json` 输出含 `serde_json v1`，确认依赖已进依赖图。
-- [ ] `cargo tree -p mojian-core | grep -E 'serde_yaml|tokio|reqwest'` 无输出，确认未引入被禁依赖。
+- [x] `cargo build --workspace` 退出码 0（真实构建产物，devops.md Build Verification 口径）。
+- [x] `cargo tree -p mojian-core | grep serde_json` 输出含 `serde_json v1`，确认依赖已进依赖图。
+- [x] `cargo tree -p mojian-core | grep -E 'serde_yaml|tokio|reqwest'` 无输出，确认未引入被禁依赖。
 
 ## Dependencies
 
@@ -50,3 +50,4 @@
 - 2026-07-07 [planning-agent] created status=ready
 - 2026-07-08 [builder-agent] status ready → in_progress：认领任务
 - 2026-07-08 [builder-agent] status in_progress → reviewing：workspace 加 serde_json="1" + mojian-core 引入、error.rs 新增 5 个 CoreError 变体（SubprocessFailed/JsonParse #[from] serde_json::Error/ManifestInvalid/SymbolUnresolved/GateStateMismatch）；cargo check 0 error、cargo build --workspace 成功、cargo test -p mojian-core --lib 9 passed；cargo tree 确认 serde_json v1 进图、无 serde_yaml/tokio/reqwest。Build Verification 与 Builder Exit Criteria 全部通过
+- 2026-07-08 [qa-agent] status reviewing → done：QA Verification 3/3 通过（cargo build --workspace EXIT=0；cargo tree 含 serde_json v1.0.150；serde_yaml/tokio/reqwest grep 无输出；附加 cargo test -p mojian-core --lib 9 passed / 0 failed）

@@ -76,3 +76,26 @@ steps:
 - [x] issue #12 builder-agent TASK-001 comment — done
 
 | builder-agent | TASK-001 | N/A | N/A | 2026-07-08 |
+
+## qa-agent — 2026-07-08
+
+steps:
+- [x] dev 环境探测（cargo 1.96.1，devops.md Build Verification 口径） — done
+- [x] TASK-001 QA Verification 3/3 真跑（cargo build --workspace EXIT=0 / cargo tree serde_json v1.0.150 / 无 serde_yaml·tokio·reqwest） — done
+- [x] 附加回归 cargo test -p mojian-core --lib 9 passed — done
+- [x] TASK-001 status reviewing → done — done
+- [x] review.md 追加 TASK-001 通过记录 — done
+
+| qa-agent | TASK-001 | N/A | N/A | 2026-07-08 |
+
+## builder-agent — 2026-07-08 (TASK-002)
+
+steps:
+- [x] TASK-002 实现（mojian-core::log：GenerationEvent/InputSlice/DecisionEvent + append_generation/append_decision + read_decision_comments；lib.rs 导出） — done
+- [x] Build Verification（cargo check 0 error / cargo test -p mojian-core --test log_jsonl EXIT=0 3 passed / log 单测 5 passed） — done
+- [x] TASK-002 status ready → in_progress → reviewing — done
+- [x] log.md 追加 TASK-002 构建记录 — done
+- [x] issue #11 builder-agent TASK-002 comment — done
+- [x] issue #12 builder-agent TASK-002 comment — done
+
+| builder-agent | TASK-002 | N/A | N/A | 2026-07-08 |

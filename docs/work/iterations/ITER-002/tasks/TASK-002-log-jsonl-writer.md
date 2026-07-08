@@ -1,11 +1,11 @@
 # TASK-002 log 模块：generation/decision JSONL 追加写 + 评论回读
 
 - iteration: ITER-002
-- status: planned
+- status: reviewing
 - type: backend
 - owner: builder-agent
 - created: 2026-07-07
-- updated: 2026-07-07
+- updated: 2026-07-08
 
 ## Goal
 
@@ -52,3 +52,13 @@
 ## Log
 
 - 2026-07-07 [planning-agent] created status=planned（依赖 TASK-001）
+- 2026-07-08 [builder-agent] status ready → in_progress：认领任务
+- 2026-07-08 [builder-agent] status in_progress → reviewing：新增 mojian-core::log（GenerationEvent/InputSlice/DecisionEvent + append_generation/append_decision 追加写 JSONL + read_decision_comments 按 gate/target 过滤回读），lib.rs 导出；Build Verification 与 Builder Exit Criteria 全部通过。
+  - Exit 校验依据：
+    - GenerationEvent（Serialize+Deserialize）含 step/agent/spec_path/spec_hash/inputs(InputSlice: path/anchor/content_hash)/token_in/token_out/cost/ts；单测 generation_serializes_to_single_line_json 断言单行 + 字段形状/rename（无 anchor 时省略 key）。
+    - DecisionEvent（Serialize+Deserialize）含 gate/verdict/target/comment/ts；单测 decision_round_trips_and_omits_empty_optionals 往返 + 空 Option 省略。
+    - append_generation/append_decision：fs::create_dir_all 建 `<data_dir>/logs/{project_id}/`，OpenOptions.append + writeln! 单行追加不覆盖；集成测 append_generation_is_append_only_two_lines 断言两行、每行可反序列化、第一行未被改动。
+    - read_decision_comments：逐行反序列化，pick_comment 过滤 gate 相同 + comment 非空 + target 命中（查询 None 取全部 / 事件 target 空为全局）；文件不存在返回空 Vec。单测 pick_comment_filters_by_gate / _skips_empty_or_missing_comment / _target_boundaries 覆盖含空 target 与不匹配 target 边界；集成测 read_decision_comments_filters_by_gate / _missing_file_returns_empty。
+    - 不写 check.jsonl（裁决①排除）；仅新增常量 GENERATION_LOG_FILE / DECISION_LOG_FILE。
+    - cargo check 0 error；命名 snake_case 动词开头 / PascalCase 类型，遵循 docs/naming.md。
+  - Build Verification：cargo check 通过（快速校验）；未触及打包文件范围（无 Cargo.toml / 依赖变更），无需打包校验。cargo test -p mojian-core --test log_jsonl EXIT=0（3 passed）；log 模块单测 5 passed。
