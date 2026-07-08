@@ -36,4 +36,7 @@ pub enum CoreError {
 
     #[error("关卡状态不匹配：期望处于关卡 {expected:?}，实际为 {actual:?}")]
     GateStateMismatch { expected: String, actual: String },
+
+    #[error("判定 {verdict} 缺少目标（章节 / 批次 id）")]
+    MissingDecisionTarget { verdict: String },
 }

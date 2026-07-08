@@ -46,3 +46,18 @@ QA Verification：
 
 运行结论：
   所有 QA Verification 通过 ✓（3/3）；ClaudeCliRunner 经 MOJIAN_CLAUDE_CMD 真实 spawn 假命令验证外部命令可替换 + JSON 解析路径，非 0 退出返回 SubprocessFailed 不 panic；FakeRunner trait 注入与 SdkResponse total_cost_usd/usage 容错解析经 lib 单测覆盖
+
+## TASK-004 — 2026-07-08 — ✅ 通过
+
+dev 环境：Rust workspace（devops.md Build Verification 口径），无外部服务；MOJIAN_HOME 指向 mktemp 隔离目录；`cargo build --workspace` EXIT=0
+
+QA Verification：
+  [x] `cargo test -p mojian-core --test context_assemble` 退出码 0 — 命令：`cargo test -p mojian-core --test context_assemble`；响应：`test result: ok. 2 passed; 0 failed`，IT_EXIT=0（集成测试在隔离 MOJIAN_HOME + 唯一临时项目目录中 ensure_master→deploy_spec 部署占位 SPEC、open_central_db+register_project 种子最小 DB 行，真实调用 assemble_bundle 解析磁盘上的 `.claude/agents/brief-agent.manifest.toml`）
+  [x] 断言 Bundle.agent 指向 brief-agent、write_scope 由 manifest write: 推导（非空、与白名单一致）、inputs 含被切片文件 content_hash — test `assemble_bundle_end_to_end_with_comment_feedback`；真实断言：`bundle.agent == ".claude/agents/brief-agent.md"`、`bundle.write_scope == vec!["creative/creative-brief.md"]` 且非空、`bundle.inputs.contains(slice_ref(CLAUDE.md 整文件).content_hash)` 与 `bundle.inputs.contains(slice_ref(brief-agent.md #inputs 段级).content_hash)` 均 ok；段级切片只取 `## inputs` 段不越界到 `## output`
+  [x] decision.jsonl 写入 gate=="brief" 带 comment 记录后，assemble_bundle 的 Bundle.inputs 含该评论文本（REQ-011 回喂通路）— 同 test：append_decision 写入 `gate:brief / verdict:REVISE / comment:"把题材收紧到都市悬疑，弱化群像"`，断言 `bundle.inputs.contains(comment)` ok；反向 test `assemble_bundle_without_comments_has_no_feedback_block` 断言无 decision 时 inputs 仍含 `## input:` 切片但不含 `human comments` 回喂块
+
+附加验证（context 单元测试回归口）：
+  [x] `cargo test -p mojian-core context` — 25 passed; 0 failed（lib 单测：符号文法四类切分含 #anchor/:{params}/纯整文件、占位代入、段级 #anchor 抽取边界、整文件切片 hash 稳定），CTX_EXIT=0
+
+运行结论：
+  所有 QA Verification 通过 ✓（3/3）；assemble_bundle 端到端在隔离环境真跑，五字段 Bundle 装配 + write_scope 推导 + 段级/整文件 blake3 content_hash + decision.jsonl 人类评论回喂（REQ-011）均以真实磁盘断言验证；剩余 TASK-005/006 仍为 planned，迭代未关闭，phase 保持 building

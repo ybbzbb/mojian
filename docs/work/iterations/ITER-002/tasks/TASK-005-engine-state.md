@@ -1,11 +1,11 @@
 # TASK-005 engine + state 模块：next_action / apply_* + 运行时 DB 行读写
 
 - iteration: ITER-002
-- status: planned
+- status: reviewing
 - type: backend
 - owner: builder-agent
 - created: 2026-07-07
-- updated: 2026-07-07
+- updated: 2026-07-08
 
 ## Goal
 
@@ -57,3 +57,14 @@
 ## Log
 
 - 2026-07-07 [planning-agent] created status=planned（依赖 TASK-002/003/004）
+- 2026-07-08 [builder-agent] status ready → in_progress：认领任务
+- 2026-07-08 [builder-agent] status in_progress → reviewing：实现 engine（Action/Verdict/next_action 纯函数 + apply_generation/apply_decision）与 state（7 个运行时 DB 读写 helper + read_pending_gate），lib.rs 导出，error.rs 补 MissingDecisionTarget 变体；Build Verification 与 Builder Exit Criteria 全部通过。
+  - Exit①②（Action/Verdict 枚举）：engine/mod.rs 定义 `Action{Advance,Generate{agent,manifest},HumanGate{gate},Idle}` 与 `Verdict{Confirmed,Revise,Void}`（含 as_db_str / TryFrom<&str>）；`verdict_parses_and_round_trips` 单测证。
+  - Exit③（next_action 纯函数）：`RunState`（sop_phase + pending_gate）→ Action 无 IO 映射；pending_gate 优先 HumanGate（Generate 与关卡间检查步位空过，不写 check.jsonl）；style_sampling/style_extracting→Advance、brief_drafting→Generate、其余→Idle。单测 `style_phases_map_to_advance` / `brief_drafting_maps_to_generate` / `pending_gate_takes_priority_over_phase` / `unwired_phase_maps_to_idle`。
+  - Exit④（apply_generation）：为每个 InputSlice upsert_artifact_ref(kind=input) + set_gate(brief)；集成测试 `generation_sets_brief_gate_then_confirm_advances` 断言回读 cursors.pending_gate=="brief" 且 artifact_ref 2 行。
+  - Exit⑤（apply_decision 三判定）：CONFIRMED→clear_gate+advance vision_drafting；REVISE→clear_gate+回退（brief→brief_drafting / 章节 target→skeleton_drafting）；VOID→insert_void_record+update_chapter_status(planned)，target 缺失报 MissingDecisionTarget。集成测试三例（confirm/revise/void）全绿。
+  - Exit⑥（state 模块）：advance_sop_phase/set_gate/clear_gate/read_pending_gate（cursors JSON via serde_json，保留其他游标键）/load_chapter/update_chapter_status/insert_void_record/upsert_artifact_ref 全走 rusqlite，SCHEMA_VERSION 保持 1、无迁移。
+  - Exit⑦（导出 + cargo check）：lib.rs 追加 `pub mod engine; pub mod state;` 与 re-export；`cargo check --workspace` 0 error。
+  - Exit⑧（单元测试覆盖映射）：见 Exit③ 四个单测 + state 模块 6 个单测。
+  - Exit⑨（命名）：phase 名逐字对齐 SopPhase，函数 snake_case 动词开头，Verdict 变体 PascalCase。
+  - Build Verification：`cargo check -p mojian-core` 与 `cargo check --workspace` 0 error（未改 Cargo.toml，serde_json 既有依赖，无新依赖、无 schema 迁移，未触发打包校验条件）；`cargo test -p mojian-core --lib` 54 passed；`MOJIAN_HOME=<tmp> cargo test -p mojian-core --test engine_loop` 3 passed（EXIT=0）。

@@ -1,7 +1,7 @@
 # TASK-004 context 模块：manifest + 符号解析 + 切片 + assemble_bundle + 占位 SPEC 步
 
 - iteration: ITER-002
-- status: reviewing
+- status: done
 - type: backend
 - owner: builder-agent
 - created: 2026-07-07
@@ -63,3 +63,4 @@
 - 2026-07-07 [planning-agent] created status=planned（依赖 TASK-002 log、TASK-003 sdk）
 - 2026-07-08 [builder-agent] status planned → ready → in_progress：前置 TASK-002/003 均 done，认领任务
 - 2026-07-08 [builder-agent] status in_progress → reviewing：实现 context 四模块（manifest TOML sidecar / 符号解析 + 占位代入 / 段级·整文件切片 + blake3 hash / assemble_bundle 全链）+ 占位 brief-agent 步骤资产 + lib.rs 导出；Build Verification（cargo check/build --workspace 0 error、cargo test 全绿）与 Builder Exit Criteria 8/8 全部通过。符号占位代入曾因 parse 剥括号导致未替换，已修复（代入前重新包回 `{...}`）。
+- 2026-07-08 [qa-agent] status reviewing → done：QA Verification 3/3 通过（cargo build --workspace EXIT=0；cargo test -p mojian-core --test context_assemble EXIT=0 2 passed / 0 failed，真实部署占位 SPEC + 种子 DB + 磁盘 manifest 解析；集成测试真断言 Bundle.agent=brief-agent、write_scope 由 manifest write: 推导非空且与白名单一致、inputs 含整文件+段级切片 content_hash、decision.jsonl gate==brief 评论回喂 inputs REQ-011）

@@ -145,3 +145,22 @@ steps:
 - [x] issue #12 builder-agent TASK-004 comment — done
 
 | builder-agent | TASK-004 | N/A | N/A | 2026-07-08 |
+
+## qa-agent — 2026-07-08 (TASK-004)
+
+steps:
+- [x] dev 环境探测（cargo 1.96.1；devops.md Build Verification 口径；MOJIAN_HOME=mktemp 隔离，无外部服务/关停） — done
+- [x] TASK-004 QA Verification 3/3 真跑（cargo build --workspace EXIT=0 / cargo test -p mojian-core --test context_assemble EXIT=0 2 passed 0 failed；集成测试部署占位 SPEC + 种子 DB + 磁盘 manifest 真实 assemble_bundle；断言 Bundle.agent=brief-agent / write_scope 由 write: 推导非空且合白名单 / inputs 含整文件+段级 content_hash / decision.jsonl gate==brief 评论回喂 inputs REQ-011） — done
+- [x] 附加回归 cargo test -p mojian-core context 25 passed 0 failed（符号四类切分 + 占位代入 + #anchor 段级边界 + 整文件 hash 稳定） — done
+- [x] TASK-004 status reviewing → done — done
+- [x] review.md 追加 TASK-004 通过记录 — done
+
+| qa-agent | TASK-004 | N/A | N/A | 2026-07-08 |
+
+## builder-agent — 2026-07-08 (TASK-005)
+
+steps:
+- [x] issue #11 builder-agent TASK-005 comment — done
+- [x] issue #12 builder-agent TASK-005 comment — done
+
+| builder-agent | TASK-005 | N/A | N/A | 2026-07-08 |
